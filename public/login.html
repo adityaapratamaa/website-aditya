@@ -1,135 +1,147 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-  <meta charset="UTF-8">
-  <title>Login</title>
+<meta charset="UTF-8">
+<title>Login</title>
 
-  <style>
-    * {
-      box-sizing: border-box;
-      font-family: 'Segoe UI', sans-serif;
-    }
+<style>
+*{box-sizing:border-box;font-family:'Segoe UI',sans-serif;}
 
-    body {
-      margin: 0;
-      height: 100vh;
-      background: linear-gradient(135deg, #0f172a, #020617);
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      color: white;
-    }
+body{
+  margin:0;
+  height:100vh;
+  background:linear-gradient(135deg,#0f172a,#020617);
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  color:white;
+}
 
-    .container {
-      background: rgba(30, 41, 59, 0.9);
-      backdrop-filter: blur(12px);
-      padding: 40px;
-      border-radius: 16px;
-      width: 340px;
-      box-shadow: 0 10px 40px rgba(0,0,0,0.6);
-    }
+.container{
+  background:rgba(30,41,59,.9);
+  backdrop-filter:blur(12px);
+  padding:40px;
+  border-radius:16px;
+  width:340px;
+  box-shadow:0 10px 40px rgba(0,0,0,.6);
+}
 
-    h2 {
-      text-align: center;
-      margin-bottom: 25px;
-    }
+h2{text-align:center;margin-bottom:25px;}
 
-    input {
-      width: 100%;
-      padding: 12px;
-      margin-bottom: 15px;
-      border-radius: 8px;
-      border: none;
-      background: #334155;
-      color: white;
-    }
+input{
+  width:100%;
+  padding:12px;
+  margin-bottom:15px;
+  border-radius:8px;
+  border:none;
+  background:#334155;
+  color:white;
+}
 
-    button {
-      width: 100%;
-      padding: 12px;
-      border-radius: 8px;
-      border: none;
-      background: linear-gradient(135deg, #3b82f6, #2563eb);
-      color: white;
-      font-weight: bold;
-      cursor: pointer;
-    }
+button{
+  width:100%;
+  padding:12px;
+  border-radius:8px;
+  border:none;
+  background:linear-gradient(135deg,#3b82f6,#2563eb);
+  color:white;
+  font-weight:bold;
+  cursor:pointer;
+  transition:.3s;
+}
+button:hover{transform:scale(1.03)}
 
-    .popup {
-      position: fixed;
-      top: 20px;
-      left: 50%;
-      transform: translateX(-50%);
-      padding: 12px 20px;
-      border-radius: 8px;
-      display: none;
-      font-weight: bold;
-      z-index: 999;
-    }
+.popup{
+  position:fixed;
+  top:20px;
+  left:50%;
+  transform:translateX(-50%);
+  padding:12px 20px;
+  border-radius:8px;
+  display:none;
+  font-weight:bold;
+  z-index:999;
+}
 
-    .success { background: #22c55e; }
-    .error { background: #ef4444; }
-  </style>
+.success{background:#22c55e;}
+.error{background:#ef4444;}
+</style>
 </head>
 
 <body>
 
 <div id="popup" class="popup"></div>
 
-<form id="form" class="container">
+<div class="container">
   <h2>Login</h2>
 
-  <input id="username" placeholder="Username" required>
-  <input id="password" type="password" placeholder="Password" required>
+  <input id="username" placeholder="Username">
+  <input id="password" type="password" placeholder="Password">
 
-  <button>Login</button>
+  <!-- 🔥 FIX: TYPE BUTTON -->
+  <button type="button" onclick="login()">Login</button>
 
-  <p style="text-align:center; margin-top:10px;">
-    Belum punya akun? <a href="register.html" style="color:#60a5fa;">Register</a>
+  <p style="text-align:center;margin-top:10px;">
+    Belum punya akun?
+    <a href="register.html" style="color:#60a5fa;">Register</a>
   </p>
-</form>
+</div>
 
 <script>
-function showPopup(msg, type) {
-  const popup = document.getElementById("popup")
-  popup.innerText = msg
-  popup.className = "popup " + type
-  popup.style.display = "block"
+const BASE = "https://website-aditya-production.up.railway.app"
 
-  setTimeout(() => popup.style.display = "none", 2000)
+function showPopup(msg,type){
+  const popup=document.getElementById("popup")
+  popup.innerText=msg
+  popup.className="popup "+type
+  popup.style.display="block"
+  setTimeout(()=>popup.style.display="none",2000)
 }
 
-document.getElementById("form").addEventListener("submit", async (e) => {
-  e.preventDefault()
+async function login(){
+  const username=document.getElementById("username").value
+  const password=document.getElementById("password").value
 
-  const username = document.getElementById("username").value
-  const password = document.getElementById("password").value
+  if(!username || !password){
+    showPopup("Isi semua field","error")
+    return
+  }
 
-  try {
-    const res = await fetch("https://website-aditya-production.up.railway.app/login", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      credentials: "include",
-      body: JSON.stringify({ username, password })
+  try{
+    const res = await fetch(BASE + "/login",{
+      method:"POST",
+      credentials:"include", // 🔥 WAJIB
+      headers:{"Content-Type":"application/json"},
+      body:JSON.stringify({username,password})
     })
 
     const data = await res.json()
 
-    if (data.success) {
-      showPopup("✅ Login berhasil!", "success")
+    if(data.success){
+      showPopup("Login berhasil","success")
 
-      setTimeout(() => {
-        window.location.href = "index.html"
-      }, 1000)
-    } else {
-      showPopup("❌ Username / password salah", "error")
+      // 🔥 CEK SESSION DULU (ANTI NENDANG)
+      setTimeout(async ()=>{
+        const check = await fetch(BASE + "/me",{
+          credentials:"include"
+        })
+        const result = await check.json()
+
+        if(result.loggedIn){
+          window.location.href="index.html"
+        }else{
+          showPopup("Session gagal","error")
+        }
+      },500)
+
+    }else{
+      showPopup("Username / password salah","error")
     }
 
-  } catch (err) {
-    console.error("LOGIN ERROR:", err)
-    showPopup("❌ Server error", "error")
+  }catch{
+    showPopup("Server error","error")
   }
-})
+}
 </script>
 
 </body>
