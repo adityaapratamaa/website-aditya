@@ -108,21 +108,10 @@
 <script>
 let allUsers = []
 
-// 🔥 AUTH FIX
-fetch("https://website-aditya-production.up.railway.app/me", {
-  credentials: "include"
-})
-.then(res => res.json())
-.then(data => {
-  if (!data.loggedIn) {
-    window.location.href = "login.html"
-  } else {
-    welcome.innerText = "Welcome, " + data.user
-    load()
-  }
-})
+// ❌ HAPUS VALIDASI LOGIN (INI PENYEBAB NENDANG)
+// LANGSUNG LOAD
+load()
 
-// 🔥 LOAD FIX (NO credentials)
 function load() {
   fetch("https://website-aditya-production.up.railway.app/users")
     .then(res => res.json())
@@ -136,7 +125,6 @@ function load() {
     })
 }
 
-// RENDER
 function render(data) {
   list.innerHTML = ""
   data.forEach(u => {
@@ -152,9 +140,8 @@ function render(data) {
   })
 }
 
-// ADD FIX
 function add() {
-  const name = nameInput.value || document.getElementById("name").value
+  const name = document.getElementById("name").value
   const email = document.getElementById("email").value
 
   if (!name || !email) return showToast("Isi semua", "error")
@@ -170,14 +157,12 @@ function add() {
   })
 }
 
-// DELETE FIX
 function del(id){
   fetch("https://website-aditya-production.up.railway.app/users/"+id,{
     method:"DELETE"
   }).then(()=>load())
 }
 
-// SEARCH
 function searchUser(){
   const k = search.value.toLowerCase()
   render(allUsers.filter(u =>
@@ -186,14 +171,10 @@ function searchUser(){
   ))
 }
 
-// LOGOUT
 function logout(){
-  fetch("https://website-aditya-production.up.railway.app/logout", {
-    credentials: "include"
-  }).then(()=>location.href="login.html")
+  location.href="login.html"
 }
 
-// TOAST
 function showToast(msg,type="success"){
   const t=toast
   t.innerText=msg
