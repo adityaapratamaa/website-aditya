@@ -6,9 +6,6 @@ const session = require("express-session")
 
 const app = express()
 
-app.set("trust proxy", 1)
-
-// ✅ CORS FIX
 app.use(cors({
   origin: "https://website-aditya-one.vercel.app",
   credentials: true
@@ -16,7 +13,7 @@ app.use(cors({
 
 app.use(express.json())
 
-// ✅ SESSION (hanya untuk login)
+// 🔥 SESSION (FIXED)
 app.use(session({
   secret: "secret-key",
   resave: false,
@@ -27,7 +24,7 @@ app.use(session({
   }
 }))
 
-// ✅ DATABASE
+// 🔥 DATABASE
 const db = mysql.createPool({
   uri: process.env.DATABASE_URL,
   ssl: { rejectUnauthorized: false }
@@ -44,36 +41,6 @@ const db = mysql.createPool({
 })()
 
 // ================= AUTH =================
-
-// REGISTER
-app.post("/register", async (req, res) => {
-  try {
-    const { username, password } = req.body
-
-    const [existing] = await db.query(
-      "SELECT * FROM auth_users WHERE username=?",
-      [username]
-    )
-
-    if (existing.length > 0) {
-      return res.json({ success: false })
-    }
-
-    const hash = await bcrypt.hash(password, 10)
-
-    await db.query(
-      "INSERT INTO auth_users (username,password) VALUES (?,?)",
-      [username, hash]
-    )
-
-    res.json({ success: true })
-  } catch (err) {
-    console.error(err)
-    res.status(500).json({ error: err.message })
-  }
-})
-
-// LOGIN
 app.post("/login", async (req, res) => {
   try {
     const { username, password } = req.body
@@ -91,37 +58,28 @@ app.post("/login", async (req, res) => {
     req.session.user = username
     res.json({ success: true })
   } catch (err) {
-    console.error(err)
     res.status(500).json({ error: err.message })
   }
 })
 
-// CHECK LOGIN
 app.get("/me", (req, res) => {
   res.json({ loggedIn: !!req.session.user, user: req.session.user })
 })
 
-// LOGOUT
-app.get("/logout", (req, res) => {
-  req.session.destroy(() => {
-    res.json({ success: true })
-  })
-})
+// ================= USERS =================
 
-// ================= CRUD (NO SESSION BUG) =================
-
-// GET USERS
+// 🔥 GET USERS (FIXED)
 app.get("/users", async (req, res) => {
   try {
     const [data] = await db.query("SELECT * FROM users ORDER BY id DESC")
     res.json(data)
   } catch (err) {
-    console.error("GET USERS ERROR:", err)
+    console.error("GET ERROR:", err)
     res.status(500).json({ error: err.message })
   }
 })
 
-// ADD USER
+// 🔥 ADD USER (FIXED)
 app.post("/users", async (req, res) => {
   try {
     const { name, email } = req.body
@@ -142,18 +100,17 @@ app.post("/users", async (req, res) => {
   }
 })
 
-// DELETE
+// 🔥 DELETE
 app.delete("/users/:id", async (req, res) => {
   try {
     await db.query("DELETE FROM users WHERE id=?", [req.params.id])
     res.json({ success: true })
   } catch (err) {
-    console.error("DELETE ERROR:", err)
     res.status(500).json({ error: err.message })
   }
 })
 
-// UPDATE
+// 🔥 UPDATE
 app.put("/users/:id", async (req, res) => {
   try {
     const { name, email } = req.body
@@ -165,7 +122,6 @@ app.put("/users/:id", async (req, res) => {
 
     res.json({ success: true })
   } catch (err) {
-    console.error("UPDATE ERROR:", err)
     res.status(500).json({ error: err.message })
   }
 })
