@@ -21,15 +21,16 @@ app.use(cors({
 app.use(express.json())
 
 // ================= SESSION =================
-app.set("trust proxy", 1)
 app.use(session({
   secret: "aditya-super-secret-key-2026",
   resave: false,
   saveUninitialized: false,
+  proxy: true,
   cookie: {
     secure: true,
     sameSite: "none",
-    httpOnly: true
+    httpOnly: true,
+    maxAge: 1000 * 60 * 60 * 24 // 1 hari
   }
 }))
 
@@ -40,12 +41,15 @@ const db = mysql.createPool({
   password: process.env.MYSQLPASSWORD,
   database: process.env.MYSQLDATABASE,
   port: process.env.MYSQLPORT,
+
   ssl: {
     rejectUnauthorized: false
   },
+
   waitForConnections: true,
   connectionLimit: 10,
-  queueLimit: 0
+  enableKeepAlive: true,
+  keepAliveInitialDelay: 0
 })
 
 // ================= TEST CONNECTION =================
@@ -186,3 +190,13 @@ const PORT = process.env.PORT || 3000
 app.listen(PORT, () => {
   console.log("Server jalan di port", PORT)
 })
+
+setInterval(() => {
+  db.query("SELECT 1", (err) => {
+    if (err) {
+      console.error("❌ KeepAlive DB Error:", err.message)
+    } else {
+      console.log("✅ DB KeepAlive OK")
+    }
+  })
+}, 5000)
