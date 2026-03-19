@@ -96,14 +96,14 @@ button:hover{transform:scale(1.05)}
   to{opacity:1;transform:translateY(0)}
 }
 
-/* MODAL FIX */
+/* MODAL */
 .modal{
   display:none;
   position:fixed;
   top:0;left:0;
   width:100%;height:100%;
-  background:rgba(0,0,0,.4); /* 🔥 lebih soft */
-  backdrop-filter:blur(4px); /* 🔥 blur elegan */
+  background:rgba(0,0,0,.4);
+  backdrop-filter:blur(4px);
   justify-content:center;
   align-items:center;
 }
@@ -145,7 +145,6 @@ button:hover{transform:scale(1.05)}
 .btn-cancel:hover{
   background:#cbd5f5;
 }
-
 </style>
 </head>
 
@@ -192,21 +191,36 @@ button:hover{transform:scale(1.05)}
 <div id="toast"></div>
 
 <script>
+const BASE = "https://website-aditya-production.up.railway.app"
+
 let allUsers=[]
 let selectedId=null
 let deleteId=null
 
-load()
+// 🔐 PROTECT HALAMAN
+fetch(BASE + "/me", { credentials:"include" })
+.then(res=>res.json())
+.then(data=>{
+  if(!data.loggedIn){
+    window.location.href="login.html"
+  } else {
+    load()
+  }
+})
+.catch(()=>window.location.href="login.html")
 
+// LOAD DATA
 function load(){
-  fetch("https://website-aditya-production.up.railway.app/users")
+  fetch(BASE + "/users",{ credentials:"include" })
   .then(res=>res.json())
   .then(data=>{
     allUsers=data
     render(data)
   })
+  .catch(()=>showToast("Server error","error"))
 }
 
+// RENDER
 function render(data){
   list.innerHTML=""
   data.forEach(u=>{
@@ -223,19 +237,24 @@ function render(data){
   })
 }
 
+// ADD
 function add(){
-  const name=document.getElementById("name").value
-  const email=document.getElementById("email").value
+  const nameInput=document.getElementById("name")
+  const emailInput=document.getElementById("email")
+
+  const name=nameInput.value
+  const email=emailInput.value
 
   if(!name||!email) return showToast("Isi semua","error")
 
-  fetch("https://website-aditya-production.up.railway.app/users",{
+  fetch(BASE + "/users",{
     method:"POST",
+    credentials:"include",
     headers:{"Content-Type":"application/json"},
     body:JSON.stringify({name,email})
   }).then(()=>{
-    name.value=""
-    email.value=""
+    nameInput.value=""
+    emailInput.value=""
     load()
     showToast("Berhasil")
   })
@@ -251,8 +270,9 @@ function openEdit(id,name,email){
 }
 
 function updateUser(){
-  fetch("https://website-aditya-production.up.railway.app/users/"+selectedId,{
+  fetch(BASE + "/users/"+selectedId,{
     method:"PUT",
+    credentials:"include",
     headers:{"Content-Type":"application/json"},
     body:JSON.stringify({
       name:editName.value,
@@ -273,8 +293,9 @@ function openDelete(id){
 }
 
 function confirmDelete(){
-  fetch("https://website-aditya-production.up.railway.app/users/"+deleteId,{
-    method:"DELETE"
+  fetch(BASE + "/users/"+deleteId,{
+    method:"DELETE",
+    credentials:"include"
   }).then(()=>{
     closeDeleteModal()
     load()
@@ -282,6 +303,7 @@ function confirmDelete(){
   })
 }
 
+// CLOSE MODAL
 function closeModal(){
   modal.classList.remove("show")
   setTimeout(()=>modal.style.display="none",200)
@@ -292,6 +314,7 @@ function closeDeleteModal(){
   setTimeout(()=>deleteModal.style.display="none",200)
 }
 
+// SEARCH
 function searchUser(){
   const k=search.value.toLowerCase()
   render(allUsers.filter(u=>
@@ -300,10 +323,15 @@ function searchUser(){
   ))
 }
 
+// LOGOUT FIX
 function logout(){
-  location.href="login.html"
+  fetch(BASE + "/logout",{ credentials:"include" })
+  .then(()=>{
+    window.location.href="login.html"
+  })
 }
 
+// TOAST
 function showToast(msg,type="success"){
   const t=toast
   t.innerText=msg

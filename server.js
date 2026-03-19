@@ -29,15 +29,13 @@ const db = mysql.createPool({
   ssl: { rejectUnauthorized: false }
 })
 
-// TEST DB
-;(async () => {
-  try {
-    await db.query("SELECT 1")
-    console.log("✅ DB Connected")
-  } catch (err) {
-    console.error("❌ DB ERROR:", err)
+// ================= MIDDLEWARE AUTH =================
+function isAuth(req, res, next){
+  if(!req.session.user){
+    return res.status(401).json({ error: "Unauthorized" })
   }
-})()
+  next()
+}
 
 // ================= REGISTER =================
 app.post("/register", async (req, res) => {
@@ -67,8 +65,8 @@ app.post("/register", async (req, res) => {
     res.json({ success: true })
 
   } catch (err) {
-    console.error("REGISTER ERROR:", err)
-    res.status(500).json({ success: false, message: "Server error" })
+    console.error(err)
+    res.status(500).json({ success: false })
   }
 })
 
@@ -90,71 +88,51 @@ app.post("/login", async (req, res) => {
     req.session.user = username
     res.json({ success: true })
 
-  } catch (err) {
-    res.status(500).json({ error: err.message })
+  } catch {
+    res.status(500).json({ success: false })
   }
 })
 
 // ================= SESSION =================
 app.get("/me", (req, res) => {
-  res.json({ loggedIn: !!req.session.user, user: req.session.user })
+  res.json({ loggedIn: !!req.session.user })
 })
 
-// ================= USERS =================
-app.get("/users", async (req, res) => {
-  try {
-    const [data] = await db.query("SELECT * FROM users ORDER BY id DESC")
-    res.json(data)
-  } catch (err) {
-    res.status(500).json({ error: err.message })
-  }
-})
-
-app.post("/users", async (req, res) => {
-  try {
-    const { name, email } = req.body
-
-    if (!name || !email) {
-      return res.status(400).json({ error: "Data kosong" })
-    }
-
-    const [result] = await db.query(
-      "INSERT INTO users (name,email) VALUES (?,?)",
-      [name, email]
-    )
-
-    res.json({ success: true, id: result.insertId })
-
-  } catch (err) {
-    res.status(500).json({ error: err.message })
-  }
-})
-
-app.delete("/users/:id", async (req, res) => {
-  try {
-    await db.query("DELETE FROM users WHERE id=?", [req.params.id])
+// ================= LOGOUT =================
+app.get("/logout", (req, res) => {
+  req.session.destroy(() => {
     res.json({ success: true })
-  } catch (err) {
-    res.status(500).json({ error: err.message })
-  }
+  })
 })
 
-app.put("/users/:id", async (req, res) => {
-  try {
-    const { name, email } = req.body
+// ================= USERS (PROTECTED) =================
+app.get("/users", isAuth, async (req, res) => {
+  const [data] = await db.query("SELECT * FROM users ORDER BY id DESC")
+  res.json(data)
+})
 
-    await db.query(
-      "UPDATE users SET name=?, email=? WHERE id=?",
-      [name, email, req.params.id]
-    )
+app.post("/users", isAuth, async (req, res) => {
+  const { name, email } = req.body
+  const [result] = await db.query(
+    "INSERT INTO users (name,email) VALUES (?,?)",
+    [name, email]
+  )
+  res.json({ success: true })
+})
 
-    res.json({ success: true })
+app.delete("/users/:id", isAuth, async (req, res) => {
+  await db.query("DELETE FROM users WHERE id=?", [req.params.id])
+  res.json({ success: true })
+})
 
-  } catch (err) {
-    res.status(500).json({ error: err.message })
-  }
+app.put("/users/:id", isAuth, async (req, res) => {
+  const { name, email } = req.body
+  await db.query(
+    "UPDATE users SET name=?, email=? WHERE id=?",
+    [name, email, req.params.id]
+  )
+  res.json({ success: true })
 })
 
 // START
-const PORT = process.env.PORT || 3000
-app.listen(PORT, () => console.log("🚀 Server jalan:", PORT))
+app.listen(process.env.PORT || 3000)
