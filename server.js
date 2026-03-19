@@ -9,7 +9,7 @@ const app = express()
 app.set("trust proxy", 1)
 
 app.use(cors({
-  origin: "https://website-aditya-one.vercel.app",
+  origin: ["https://website-aditya-one.vercel.app"],
   credentials: true
 }))
 
@@ -22,12 +22,11 @@ app.use(session({
   cookie: {
     secure: true,
     sameSite: "none",
-    httpOnly: true,
-    maxAge: 1000 * 60 * 60 * 24
+    httpOnly: true
   }
 }))
 
-// ================= DATABASE FINAL =================
+// ===== DATABASE =====
 const db = mysql.createPool({
   uri: process.env.DATABASE_URL,
   waitForConnections: true,
@@ -35,87 +34,88 @@ const db = mysql.createPool({
   ssl: { rejectUnauthorized: false }
 })
 
-// ================= TEST DB =================
+// ===== TEST DB =====
 ;(async () => {
   try {
     await db.query("SELECT 1")
-    console.log("✅ Database connected")
+    console.log("✅ DB Connected")
   } catch (err) {
     console.error("❌ DB ERROR:", err.message)
   }
 })()
 
-function isAuth(req, res, next) {
-  if (req.session.user) return next()
-  res.status(401).json({ message: "Unauthorized" })
-}
-
-// ================= REGISTER =================
+// ===== AUTH =====
 app.post("/register", async (req, res) => {
-  try {
-    const { username, password } = req.body
+  const { username, password } = req.body
 
-    if (!username || !password) {
-      return res.status(400).json({ error: "Isi semua field" })
-    }
+  const [existing] = await db.query(
+    "SELECT * FROM auth_users WHERE username = ?",
+    [username]
+  )
 
-    const [existing] = await db.query(
-      "SELECT * FROM auth_users WHERE username = ?",
-      [username]
-    )
-
-    if (existing.length > 0) {
-      return res.json({ success: false })
-    }
-
-    const hash = await bcrypt.hash(password, 10)
-
-    await db.query(
-      "INSERT INTO auth_users (username, password) VALUES (?, ?)",
-      [username, hash]
-    )
-
-    res.json({ success: true })
-
-  } catch (err) {
-    console.error(err)
-    res.status(500).json({ error: "Server error" })
+  if (existing.length > 0) {
+    return res.json({ success: false })
   }
+
+  const hash = await bcrypt.hash(password, 10)
+
+  await db.query(
+    "INSERT INTO auth_users (username, password) VALUES (?, ?)",
+    [username, hash]
+  )
+
+  res.json({ success: true })
 })
 
-// ================= LOGIN =================
 app.post("/login", async (req, res) => {
-  try {
-    const { username, password } = req.body
+  const { username, password } = req.body
 
-    const [users] = await db.query(
-      "SELECT * FROM auth_users WHERE username = ?",
-      [username]
-    )
+  const [users] = await db.query(
+    "SELECT * FROM auth_users WHERE username = ?",
+    [username]
+  )
 
-    if (users.length === 0) {
-      return res.json({ success: false })
-    }
+  if (users.length === 0) return res.json({ success: false })
 
-    const user = users[0]
-    const match = await bcrypt.compare(password, user.password)
+  const user = users[0]
+  const match = await bcrypt.compare(password, user.password)
 
-    if (!match) return res.json({ success: false })
+  if (!match) return res.json({ success: false })
 
-    req.session.user = username
-    res.json({ success: true })
-
-  } catch (err) {
-    res.status(500).json({ error: "Server error" })
-  }
+  req.session.user = username
+  res.json({ success: true })
 })
 
-// ================= DEBUG =================
+app.get("/me", (req, res) => {
+  if (!req.session.user) {
+    return res.json({ user: null })
+  }
+  res.json({ user: req.session.user })
+})
+
+// ===== USERS CRUD =====
+app.get("/users", async (req, res) => {
+  const [data] = await db.query("SELECT * FROM users")
+  res.json(data)
+})
+
+app.post("/users", async (req, res) => {
+  const { name, email } = req.body
+
+  await db.query(
+    "INSERT INTO users (name, email) VALUES (?, ?)",
+    [name, email]
+  )
+
+  res.json({ success: true })
+})
+
+// ===== DEBUG =====
 app.get("/debug-users", async (req, res) => {
   const [data] = await db.query("SELECT * FROM auth_users")
   res.json(data)
 })
 
-// ================= START =================
+// ===== START =====
 const PORT = process.env.PORT || 3000
 app.listen(PORT, () => console.log("Server jalan:", PORT))

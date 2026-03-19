@@ -13,11 +13,11 @@
     }
 
     .top {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 20px 40px;
-}
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 20px 40px;
+    }
 
     .logout {
       padding: 8px 14px;
@@ -29,146 +29,113 @@
     }
 
     .container {
-  max-width: 800px;
-  margin: auto;
-  background: #1e293b;
-  padding: 30px;
-  border-radius: 20px;
-  box-shadow: 0 15px 40px rgba(0,0,0,0.6);
-}
+      max-width: 800px;
+      margin: auto;
+      background: #1e293b;
+      padding: 30px;
+      border-radius: 20px;
+      box-shadow: 0 15px 40px rgba(0,0,0,0.6);
+    }
 
-   input {
-  padding: 14px;
-  margin: 8px 0;
-  width: 100%;
-  border: none;
-  border-radius: 10px;
-  background: #334155;
-  color: white;
-  font-size: 14px;
-}
+    input {
+      padding: 14px;
+      margin: 8px 0;
+      width: 100%;
+      border: none;
+      border-radius: 10px;
+      background: #334155;
+      color: white;
+      font-size: 14px;
+    }
 
-button {
-  padding: 12px;
-  border-radius: 10px;
-  background: linear-gradient(135deg, #3b82f6, #2563eb);
-  border: none;
-  color: white;
-  font-weight: bold;
-  cursor: pointer;
-  transition: 0.3s;
-}
+    button {
+      padding: 12px;
+      border-radius: 10px;
+      background: linear-gradient(135deg, #3b82f6, #2563eb);
+      border: none;
+      color: white;
+      font-weight: bold;
+      cursor: pointer;
+      transition: 0.3s;
+    }
 
-button:hover {
-  transform: scale(1.05);
-}
+    button:hover {
+      transform: scale(1.05);
+    }
 
     .user {
-  padding: 15px;
-  margin-top: 12px;
-  background: #0f172a;
-  border-radius: 12px;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-    .user button {
-      background: #ef4444;
+      padding: 15px;
+      margin-top: 12px;
+      background: #0f172a;
+      border-radius: 12px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
     }
 
     .actions {
-  display: flex;
-  gap: 10px;
-}
+      display: flex;
+      gap: 10px;
+    }
 
-.edit-btn {
-  background: #f59e0b;
-}
+    .edit-btn { background: #f59e0b; }
+    .delete-btn { background: #ef4444; }
 
-.delete-btn {
-  background: #ef4444;
-}
+    #toast {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      background: #22c55e;
+      color: white;
+      padding: 12px 20px;
+      border-radius: 8px;
+      font-weight: bold;
+      z-index: 9999;
+      opacity: 0;
+      transform: translateY(20px);
+      transition: all 0.4s ease;
+    }
 
-#toast {
-  position: fixed;
-  bottom: 20px;
-  right: 20px;
-  background: #22c55e;
-  color: white;
-  padding: 12px 20px;
-  border-radius: 8px;
-  font-weight: bold;
-  z-index: 9999;
+    .modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0,0,0,0.7);
+      justify-content: center;
+      align-items: center;
+      z-index: 999;
+    }
 
-  opacity: 0;
-  transform: translateY(20px);
-  transition: all 0.4s ease;
-}
+    .modal-content {
+      background: #1e293b;
+      padding: 30px;
+      border-radius: 15px;
+      width: 300px;
+      text-align: center;
+      transform: scale(0.9);
+      opacity: 0;
+      transition: all 0.3s ease;
+    }
 
-.modal {
-  display: none;
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: rgba(0,0,0,0.7);
+    .modal.show .modal-content {
+      transform: scale(1);
+      opacity: 1;
+    }
 
-  justify-content: center;
-  align-items: center;
-
-  z-index: 999;
-  backdrop-filter: blur(4px);
-}
-
-.modal-content {
-  background: #1e293b;
-  padding: 30px;
-  border-radius: 15px;
-  width: 300px;
-  text-align: center;
-
-  transform: scale(0.9);
-  opacity: 0;
-  transition: all 0.3s ease;
-}
-
-.btn-delete {
-  background: #ef4444;
-}
-
-.btn-cancel {
-  background: #64748b;
-}
-
-.modal.show .modal-content {
-  transform: scale(1);
-  opacity: 1;
-}
-
-.btn-delete,
-.btn-cancel {
-  min-width: 100px;
-}
-
-.btn-delete:hover {
-  background: #dc2626;
-}
-
-.btn-cancel:hover {
-  background: #475569;
-}
-
+    .btn-delete { background: #ef4444; }
+    .btn-cancel { background: #64748b; }
   </style>
 </head>
 
 <body>
-  <div id="deleteModal" class="modal">
+
+<div id="deleteModal" class="modal">
   <div class="modal-content">
     <h2>Hapus User</h2>
     <p>Yakin mau hapus user ini?</p>
-
     <div style="display:flex; justify-content:center; gap:10px; margin-top:15px;">
       <button onclick="confirmDelete()" class="btn-delete">Hapus</button>
       <button onclick="closeDeleteModal()" class="btn-cancel">Batal</button>
@@ -191,147 +158,61 @@ button:hover {
 
   <hr>
 
-<input type="text" id="search" placeholder="Cari user..." onkeyup="searchUser()">
-
+  <input type="text" id="search" placeholder="Cari user..." onkeyup="searchUser()">
   <div id="list"></div>
 </div>
 
-<script>
-  function closeDeleteModal() {
-  const modal = document.getElementById("deleteModal")
-  modal.classList.remove("show")
+<div id="modal" class="modal">
+  <div class="modal-content">
+    <h3>Edit User</h3>
+    <input id="editName" placeholder="Nama">
+    <input id="editEmail" placeholder="Email">
+    <div style="display:flex; justify-content:center; gap:10px; margin-top:15px;">
+      <button onclick="updateUser()">Simpan</button>
+      <button onclick="closeModal()" class="btn-cancel">Batal</button>
+    </div>
+  </div>
+</div>
 
-  setTimeout(() => {
-    modal.style.display = "none"
-  }, 200)
-
-  deleteId = null
-}
-</script>
-<script>
-  let selectedId = null
-
-function edit(id, name, email) {
-  selectedId = id
-
-  document.getElementById("editName").value = decodeURIComponent(name)
-  document.getElementById("editEmail").value = email
-
-  const modal = document.getElementById("modal")
-  modal.style.display = "flex"
-
-  setTimeout(() => {
-    modal.classList.add("show")
-  }, 10)
-}
-
-function closeModal() {
-  const modal = document.getElementById("modal")
-  modal.classList.remove("show")
-
-  setTimeout(() => {
-    modal.style.display = "none"
-  }, 200)
-
-  selectedId = null
-}
-
-function updateUser() {
-  const name = document.getElementById("editName").value
-  const email = document.getElementById("editEmail").value
-  if (!name || !email) {
-  showToast("❌ Isi semua data", "error")
-  return
-}
-
-  fetch("https://website-aditya-production.up.railway.app/users/" + selectedId, {
-  method: "PUT",
-  headers: {
-    "Content-Type": "application/json"
-  },
-  credentials: "include",
-  body: JSON.stringify({ name, email })
-})
-.then(() => {
-  closeModal()
-  load()
-  showToast("✏️ User berhasil diupdate")
-})
-.catch(err => {
-  console.error("Error update:", err)
-  showToast("❌ Gagal update", "error")
-})
-}
-</script>
-
-<script>
-  window.onclick = function(e) {
-  const editModal = document.getElementById("modal")
-  const deleteModal = document.getElementById("deleteModal")
-
-  if (e.target === editModal) {
-  closeModal()
-}
-
-  if (e.target === deleteModal) {
-  closeDeleteModal()
-}
-}
-</script>
-
-<script>
-  function confirmDelete() {
-  fetch(`https://website-aditya-production.up.railway.app/users/${deleteId}`, {
-  method: "DELETE",
-  credentials: "include"
-})
-.then(() => {
-  showToast("🗑️ User berhasil dihapus", "error")
-  closeDeleteModal()
-  load()
-})
-.catch(err => {
-  console.error("Error delete:", err)
-  showToast("❌ Gagal hapus", "error")
-})
-}
-</script>
+<div id="toast"></div>
 
 <script>
 let allUsers = []
+let deleteId = null
+let selectedId = null
 
-// 🔐 CHECK LOGIN
+// AUTH
 fetch("https://website-aditya-production.up.railway.app/check-auth", {
   credentials: "include"
 })
-.then(res => res.json())
+.then(res => {
+  if (!res.ok) throw new Error()
+  return res.json()
+})
 .then(data => {
   if (!data.loggedIn) {
     window.location.href = "login.html"
   } else {
-    document.getElementById("welcome").innerText =
-      "Welcome, " + data.user + " 👋"
+    document.getElementById("welcome").innerText = "Welcome, " + data.user
     load()
   }
 })
-.catch(err => {
-  console.error("Auth error:", err)
-})
+.catch(() => showToast("❌ Server error", "error"))
 
-// LOAD DATA
+// LOAD
 function load() {
   fetch("https://website-aditya-production.up.railway.app/users", {
-  credentials: "include"
-})
-  .then(res => res.json())
+    credentials: "include"
+  })
+  .then(res => {
+    if (!res.ok) throw new Error()
+    return res.json()
+  })
   .then(data => {
     allUsers = data
     render(data)
   })
-  .catch(err => {
-    console.error("Error load:", err)
-    showToast("❌ Gagal load data", "error")
-  })
+  .catch(() => showToast("❌ Gagal load data", "error"))
 }
 
 // RENDER
@@ -346,26 +227,21 @@ function render(data) {
           <strong>${u.name}</strong><br>
           <small>${u.email}</small>
         </div>
-
         <div class="actions">
           <button class="edit-btn" onclick="edit(${u.id}, '${encodeURIComponent(u.name)}', '${u.email}')">Edit</button>
           <button class="delete-btn" onclick="del(${u.id})">Hapus</button>
         </div>
-      </div>
-    `
+      </div>`
   })
 }
 
 // SEARCH
 function searchUser() {
   const keyword = document.getElementById("search").value.toLowerCase()
-
-  const filtered = allUsers.filter(u =>
+  render(allUsers.filter(u =>
     u.name.toLowerCase().includes(keyword) ||
     u.email.toLowerCase().includes(keyword)
-  )
-
-  render(filtered)
+  ))
 }
 
 // ADD
@@ -373,107 +249,113 @@ function add() {
   const name = document.getElementById("name").value
   const email = document.getElementById("email").value
 
-    if (!name || !email) {
-    showToast("❌ Isi semua data", "error")
-    return
-  }
+  if (!name || !email) return showToast("❌ Isi semua data", "error")
 
   fetch("https://website-aditya-production.up.railway.app/users", {
-  method: "POST",
-  headers: { "Content-Type": "application/json" },
-  credentials: "include",
-  body: JSON.stringify({ name, email })
-})
-.then(() => {
-  document.getElementById("name").value = ""
-  document.getElementById("email").value = ""
-  document.getElementById("name").focus()
-  load()
-  showToast("✅ User berhasil ditambah")
-})
-.catch(err => {
-  console.error("Error add:", err)
-  showToast("❌ Gagal tambah user", "error")
-})
+    method: "POST",
+    headers: {"Content-Type": "application/json"},
+    credentials: "include",
+    body: JSON.stringify({ name, email })
+  })
+  .then(res => {
+    if (!res.ok) throw new Error()
+    return res.json()
+  })
+  .then(() => {
+    document.getElementById("name").value = ""
+    document.getElementById("email").value = ""
+    load()
+    showToast("✅ Berhasil tambah")
+  })
+  .catch(() => showToast("❌ Gagal tambah", "error"))
 }
 
 // DELETE
 function del(id) {
-  deleteId = id   // 🔥 INI WAJIB ADA
-
-  const modal = document.getElementById("deleteModal")
-  modal.style.display = "flex"
-
-  setTimeout(() => {
-    modal.classList.add("show")
-  }, 10)
+  deleteId = id
+  const m = document.getElementById("deleteModal")
+  m.style.display = "flex"
+  setTimeout(()=>m.classList.add("show"),10)
 }
 
+function confirmDelete() {
+  fetch(`https://website-aditya-production.up.railway.app/users/${deleteId}`, {
+    method: "DELETE",
+    credentials: "include"
+  })
+  .then(res => {
+    if (!res.ok) throw new Error()
+    return res.json()
+  })
+  .then(() => {
+    closeDeleteModal()
+    load()
+    showToast("🗑️ Terhapus", "error")
+  })
+  .catch(() => showToast("❌ Gagal hapus", "error"))
+}
+
+// EDIT
+function edit(id, name, email) {
+  selectedId = id
+  document.getElementById("editName").value = decodeURIComponent(name)
+  document.getElementById("editEmail").value = email
+
+  const m = document.getElementById("modal")
+  m.style.display = "flex"
+  setTimeout(()=>m.classList.add("show"),10)
+}
+
+function updateUser() {
+  const name = editName.value
+  const email = editEmail.value
+
+  if (!name || !email) return showToast("❌ Isi semua data", "error")
+
+  fetch("https://website-aditya-production.up.railway.app/users/"+selectedId,{
+    method:"PUT",
+    headers:{"Content-Type":"application/json"},
+    credentials:"include",
+    body:JSON.stringify({name,email})
+  })
+  .then(res=>{
+    if(!res.ok) throw new Error()
+    return res.json()
+  })
+  .then(()=>{
+    closeModal()
+    load()
+    showToast("✏️ Updated")
+  })
+  .catch(()=>showToast("❌ Gagal update","error"))
+}
+
+// MODAL
+function closeModal(){
+  modal.classList.remove("show")
+  setTimeout(()=>modal.style.display="none",200)
+}
+function closeDeleteModal(){
+  deleteModal.classList.remove("show")
+  setTimeout(()=>deleteModal.style.display="none",200)
+}
 
 // LOGOUT
-function logout() {
-  fetch("https://website-aditya-production.up.railway.app/logout", {
-    credentials: "include"
-  }).then(() => {
-    window.location.href = "login.html"
-  })
+function logout(){
+  fetch("https://website-aditya-production.up.railway.app/logout",{credentials:"include"})
+  .then(()=>location.href="login.html")
+}
+
+// TOAST
+function showToast(msg,type="success"){
+  const t=document.getElementById("toast")
+  t.innerText=msg
+  t.style.background=type==="error"?"#ef4444":"#22c55e"
+  t.style.display="block"
+  setTimeout(()=>{t.style.opacity=1;t.style.transform="translateY(0)"},10)
+  setTimeout(()=>{t.style.opacity=0;t.style.transform="translateY(20px)"},1800)
 }
 </script>
-
-<script>
-  function showToast(message, type = "success") {
-  const toast = document.getElementById("toast")
-
-  toast.innerText = message
-
-  if (type === "success") {
-    toast.style.background = "#22c55e"
-  } else if (type === "error") {
-    toast.style.background = "#ef4444"
-  }
-
-  // RESET (INI YANG PENTING)
-  toast.style.opacity = "0"
-  toast.style.transform = "translateY(20px)"
-
-  // tampilkan
-  toast.style.display = "block"
-
-  setTimeout(() => {
-    toast.style.opacity = "1"
-    toast.style.transform = "translateY(0)"
-  }, 10)
-
-  setTimeout(() => {
-    toast.style.opacity = "0"
-    toast.style.transform = "translateY(20px)"
-  }, 1800)
-
-  setTimeout(() => {
-    toast.style.display = "none"
-  }, 2200)
-}
-</script>
-
-<script>
-  let deleteId = null
-</script>
-
-<div id="modal" class="modal">
-  <div class="modal-content">
-    <h3>Edit User</h3>
-
-    <input id="editName" placeholder="Nama">
-    <input id="editEmail" placeholder="Email">
-
-    <div style="display:flex; justify-content:center; gap:10px; margin-top:15px;">
-      <button onclick="updateUser()">Simpan</button>
-      <button onclick="closeModal()" class="btn-cancel">Batal</button>
-    </div>
-  </div>
-</div>
-
-<div id="toast">Berhasil</div>
 
 </body>
 </html>
