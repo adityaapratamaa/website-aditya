@@ -42,7 +42,11 @@ h2{
 }
 
 /* INPUT */
-input{
+.input-group{
+  position:relative;
+}
+
+.input-group input{
   width:100%;
   padding:12px;
   margin-bottom:12px;
@@ -50,6 +54,20 @@ input{
   border:none;
   background:#334155;
   color:white;
+  padding-right:40px;
+}
+
+.input-group span{
+  position:absolute;
+  right:10px;
+  top:50%;
+  transform:translateY(-50%);
+  cursor:pointer;
+  opacity:0.7;
+}
+
+.input-group span:hover{
+  opacity:1;
 }
 
 /* BUTTON */
@@ -66,7 +84,6 @@ button{
 }
 button:hover{transform:scale(1.03)}
 
-/* LINK */
 a{color:#60a5fa}
 
 /* POPUP */
@@ -101,11 +118,20 @@ a{color:#60a5fa}
 <div class="container">
   <h2>Register</h2>
 
-  <input id="username" placeholder="Username">
-  <input id="password" type="password" placeholder="Password">
-  <input id="confirm" type="password" placeholder="Confirm Password">
+  <div class="input-group">
+    <input id="username" placeholder="Username">
+  </div>
 
-  <!-- 🔥 FIX DI SINI -->
+  <div class="input-group">
+    <input id="password" type="password" placeholder="Password">
+    <span onclick="togglePassword('password', this)">👁</span>
+  </div>
+
+  <div class="input-group">
+    <input id="confirm" type="password" placeholder="Confirm Password">
+    <span onclick="togglePassword('confirm', this)">👁</span>
+  </div>
+
   <button type="button" onclick="register()">Register</button>
 
   <p style="text-align:center;margin-top:10px;">
@@ -115,6 +141,7 @@ a{color:#60a5fa}
 </div>
 
 <script>
+// POPUP
 function showPopup(msg,type){
   const popup=document.getElementById("popup")
   popup.innerText=msg
@@ -125,6 +152,20 @@ function showPopup(msg,type){
   },2000)
 }
 
+// TOGGLE PASSWORD
+function togglePassword(id, el){
+  const input = document.getElementById(id)
+
+  if(input.type === "password"){
+    input.type = "text"
+    el.innerText = "🙈"
+  }else{
+    input.type = "password"
+    el.innerText = "👁"
+  }
+}
+
+// REGISTER
 function register(){
   const username=document.getElementById("username").value.trim()
   const password=document.getElementById("password").value
