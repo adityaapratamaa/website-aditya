@@ -41,11 +41,10 @@
       padding: 14px;
       margin: 8px 0;
       width: 100%;
-      border: none;
       border-radius: 10px;
       background: #334155;
       color: white;
-      font-size: 14px;
+      border: none;
     }
 
     button {
@@ -54,13 +53,7 @@
       background: linear-gradient(135deg, #3b82f6, #2563eb);
       border: none;
       color: white;
-      font-weight: bold;
       cursor: pointer;
-      transition: 0.3s;
-    }
-
-    button:hover {
-      transform: scale(1.05);
     }
 
     .user {
@@ -70,13 +63,9 @@
       border-radius: 12px;
       display: flex;
       justify-content: space-between;
-      align-items: center;
     }
 
-    .actions {
-      display: flex;
-      gap: 10px;
-    }
+    .actions { display: flex; gap: 10px; }
 
     .edit-btn { background: #f59e0b; }
     .delete-btn { background: #ef4444; }
@@ -85,63 +74,16 @@
       position: fixed;
       bottom: 20px;
       right: 20px;
-      background: #22c55e;
-      color: white;
       padding: 12px 20px;
       border-radius: 8px;
-      font-weight: bold;
-      z-index: 9999;
+      color: white;
       opacity: 0;
-      transform: translateY(20px);
-      transition: all 0.4s ease;
+      transition: 0.3s;
     }
-
-    .modal {
-      display: none;
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background: rgba(0,0,0,0.7);
-      justify-content: center;
-      align-items: center;
-      z-index: 999;
-    }
-
-    .modal-content {
-      background: #1e293b;
-      padding: 30px;
-      border-radius: 15px;
-      width: 300px;
-      text-align: center;
-      transform: scale(0.9);
-      opacity: 0;
-      transition: all 0.3s ease;
-    }
-
-    .modal.show .modal-content {
-      transform: scale(1);
-      opacity: 1;
-    }
-
-    .btn-delete { background: #ef4444; }
-    .btn-cancel { background: #64748b; }
   </style>
 </head>
 
 <body>
-
-<div id="deleteModal" class="modal">
-  <div class="modal-content">
-    <h2>Hapus User</h2>
-    <p>Yakin mau hapus user ini?</p>
-    <div style="display:flex; justify-content:center; gap:10px; margin-top:15px;">
-      <button onclick="confirmDelete()" class="btn-delete">Hapus</button>
-      <button onclick="closeDeleteModal()" class="btn-cancel">Batal</button>
-    </div>
-  </div>
-</div>
 
 <div class="top">
   <h2 id="welcome"></h2>
@@ -151,209 +93,113 @@
 <div class="container">
   <h2>Data Users</h2>
 
-  <h3>Tambah User</h3>
-  <input type="text" id="name" placeholder="Nama">
-  <input type="email" id="email" placeholder="Email">
+  <input id="name" placeholder="Nama">
+  <input id="email" placeholder="Email">
   <button onclick="add()">Tambah</button>
 
   <hr>
 
-  <input type="text" id="search" placeholder="Cari user..." onkeyup="searchUser()">
+  <input id="search" placeholder="Cari..." onkeyup="searchUser()">
   <div id="list"></div>
-</div>
-
-<div id="modal" class="modal">
-  <div class="modal-content">
-    <h3>Edit User</h3>
-    <input id="editName" placeholder="Nama">
-    <input id="editEmail" placeholder="Email">
-    <div style="display:flex; justify-content:center; gap:10px; margin-top:15px;">
-      <button onclick="updateUser()">Simpan</button>
-      <button onclick="closeModal()" class="btn-cancel">Batal</button>
-    </div>
-  </div>
 </div>
 
 <div id="toast"></div>
 
 <script>
 let allUsers = []
-let deleteId = null
-let selectedId = null
 
-// AUTH
-fetch("https://website-aditya-production.up.railway.app/check-auth", {
+// 🔥 AUTH FIX
+fetch("https://website-aditya-production.up.railway.app/me", {
   credentials: "include"
 })
-.then(res => {
-  if (!res.ok) throw new Error()
-  return res.json()
-})
+.then(res => res.json())
 .then(data => {
   if (!data.loggedIn) {
     window.location.href = "login.html"
   } else {
-    document.getElementById("welcome").innerText = "Welcome, " + data.user
+    welcome.innerText = "Welcome, " + data.user
     load()
   }
 })
-.catch(() => showToast("❌ Server error", "error"))
 
-// LOAD
+// 🔥 LOAD FIX (NO credentials)
 function load() {
-  fetch("https://website-aditya-production.up.railway.app/users", {
-    credentials: "include"
-  })
-  .then(res => {
-    if (!res.ok) throw new Error()
-    return res.json()
-  })
-  .then(data => {
-    allUsers = data
-    render(data)
-  })
-  .catch(() => showToast("❌ Gagal load data", "error"))
+  fetch("https://website-aditya-production.up.railway.app/users")
+    .then(res => res.json())
+    .then(data => {
+      allUsers = data
+      render(data)
+    })
+    .catch(err => {
+      console.error(err)
+      showToast("Server error", "error")
+    })
 }
 
 // RENDER
 function render(data) {
-  const list = document.getElementById("list")
   list.innerHTML = ""
-
   data.forEach(u => {
     list.innerHTML += `
       <div class="user">
         <div>
-          <strong>${u.name}</strong><br>
-          <small>${u.email}</small>
+          <b>${u.name}</b><br>${u.email}
         </div>
         <div class="actions">
-          <button class="edit-btn" onclick="edit(${u.id}, '${encodeURIComponent(u.name)}', '${u.email}')">Edit</button>
           <button class="delete-btn" onclick="del(${u.id})">Hapus</button>
         </div>
       </div>`
   })
 }
 
-// SEARCH
-function searchUser() {
-  const keyword = document.getElementById("search").value.toLowerCase()
-  render(allUsers.filter(u =>
-    u.name.toLowerCase().includes(keyword) ||
-    u.email.toLowerCase().includes(keyword)
-  ))
-}
-
-// ADD
+// ADD FIX
 function add() {
-  const name = document.getElementById("name").value
+  const name = nameInput.value || document.getElementById("name").value
   const email = document.getElementById("email").value
 
-  if (!name || !email) return showToast("❌ Isi semua data", "error")
+  if (!name || !email) return showToast("Isi semua", "error")
 
   fetch("https://website-aditya-production.up.railway.app/users", {
     method: "POST",
-    headers: {"Content-Type": "application/json"},
-    credentials: "include",
-    body: JSON.stringify({ name, email })
+    headers: {"Content-Type":"application/json"},
+    body: JSON.stringify({name,email})
   })
-  .then(res => {
-    if (!res.ok) throw new Error()
-    return res.json()
-  })
-  .then(() => {
-    document.getElementById("name").value = ""
-    document.getElementById("email").value = ""
+  .then(()=> {
     load()
-    showToast("✅ Berhasil tambah")
+    showToast("Berhasil")
   })
-  .catch(() => showToast("❌ Gagal tambah", "error"))
 }
 
-// DELETE
-function del(id) {
-  deleteId = id
-  const m = document.getElementById("deleteModal")
-  m.style.display = "flex"
-  setTimeout(()=>m.classList.add("show"),10)
+// DELETE FIX
+function del(id){
+  fetch("https://website-aditya-production.up.railway.app/users/"+id,{
+    method:"DELETE"
+  }).then(()=>load())
 }
 
-function confirmDelete() {
-  fetch(`https://website-aditya-production.up.railway.app/users/${deleteId}`, {
-    method: "DELETE",
-    credentials: "include"
-  })
-  .then(res => {
-    if (!res.ok) throw new Error()
-    return res.json()
-  })
-  .then(() => {
-    closeDeleteModal()
-    load()
-    showToast("🗑️ Terhapus", "error")
-  })
-  .catch(() => showToast("❌ Gagal hapus", "error"))
-}
-
-// EDIT
-function edit(id, name, email) {
-  selectedId = id
-  document.getElementById("editName").value = decodeURIComponent(name)
-  document.getElementById("editEmail").value = email
-
-  const m = document.getElementById("modal")
-  m.style.display = "flex"
-  setTimeout(()=>m.classList.add("show"),10)
-}
-
-function updateUser() {
-  const name = editName.value
-  const email = editEmail.value
-
-  if (!name || !email) return showToast("❌ Isi semua data", "error")
-
-  fetch("https://website-aditya-production.up.railway.app/users/"+selectedId,{
-    method:"PUT",
-    headers:{"Content-Type":"application/json"},
-    credentials:"include",
-    body:JSON.stringify({name,email})
-  })
-  .then(res=>{
-    if(!res.ok) throw new Error()
-    return res.json()
-  })
-  .then(()=>{
-    closeModal()
-    load()
-    showToast("✏️ Updated")
-  })
-  .catch(()=>showToast("❌ Gagal update","error"))
-}
-
-// MODAL
-function closeModal(){
-  modal.classList.remove("show")
-  setTimeout(()=>modal.style.display="none",200)
-}
-function closeDeleteModal(){
-  deleteModal.classList.remove("show")
-  setTimeout(()=>deleteModal.style.display="none",200)
+// SEARCH
+function searchUser(){
+  const k = search.value.toLowerCase()
+  render(allUsers.filter(u =>
+    u.name.toLowerCase().includes(k) ||
+    u.email.toLowerCase().includes(k)
+  ))
 }
 
 // LOGOUT
 function logout(){
-  fetch("https://website-aditya-production.up.railway.app/logout",{credentials:"include"})
-  .then(()=>location.href="login.html")
+  fetch("https://website-aditya-production.up.railway.app/logout", {
+    credentials: "include"
+  }).then(()=>location.href="login.html")
 }
 
 // TOAST
 function showToast(msg,type="success"){
-  const t=document.getElementById("toast")
+  const t=toast
   t.innerText=msg
-  t.style.background=type==="error"?"#ef4444":"#22c55e"
-  t.style.display="block"
-  setTimeout(()=>{t.style.opacity=1;t.style.transform="translateY(0)"},10)
-  setTimeout(()=>{t.style.opacity=0;t.style.transform="translateY(20px)"},1800)
+  t.style.background=type==="error"?"red":"green"
+  t.style.opacity=1
+  setTimeout(()=>t.style.opacity=0,1500)
 }
 </script>
 
