@@ -1,16 +1,13 @@
 const express = require("express")
-const mysql = require("mysql2")
+const mysql = require("mysql2/promise")
 const cors = require("cors")
 const bcrypt = require("bcrypt")
 const session = require("express-session")
 
 const app = express()
 
-// ================= DEBUG ENV =================
-console.log("ENV CHECK:")
-console.log("HOST:", process.env.MYSQLHOST)
-console.log("USER:", process.env.MYSQLUSER)
-console.log("DB:", process.env.MYSQLDATABASE)
+// ================= TRUST PROXY =================
+app.set("trust proxy", 1)
 
 // ================= CORS =================
 app.use(cors({
@@ -25,16 +22,15 @@ app.use(session({
   secret: "aditya-super-secret-key-2026",
   resave: false,
   saveUninitialized: false,
-  proxy: true,
   cookie: {
     secure: true,
     sameSite: "none",
     httpOnly: true,
-    maxAge: 1000 * 60 * 60 * 24 // 1 hari
+    maxAge: 1000 * 60 * 60 * 24
   }
 }))
 
-// ================= DATABASE FINAL =================
+// ================= DATABASE =================
 const db = mysql.createPool({
   host: process.env.MYSQLHOST,
   user: process.env.MYSQLUSER,
@@ -52,74 +48,84 @@ const db = mysql.createPool({
   keepAliveInitialDelay: 0
 })
 
-// ================= TEST CONNECTION =================
-db.getConnection((err, conn) => {
-  if (err) {
-    console.error("❌ DB ERROR:", err)
-  } else {
+// ================= TEST DB =================
+;(async () => {
+  try {
+    await db.query("SELECT 1")
     console.log("✅ Database connected")
-    conn.release()
+  } catch (err) {
+    console.error("❌ DB ERROR:", err.message)
   }
-})
+})()
 
 // ================= AUTH MIDDLEWARE =================
 function isAuth(req, res, next) {
-  if (req.session.user) {
-    next()
-  } else {
-    res.status(401).json({ message: "Unauthorized" })
-  }
+  if (req.session.user) return next()
+  res.status(401).json({ message: "Unauthorized" })
 }
 
 // ================= REGISTER =================
 app.post("/register", async (req, res) => {
-  const { username, password } = req.body
+  try {
+    const { username, password } = req.body
 
-  if (!username || !password) {
-    return res.status(400).json({ error: "Isi semua field" })
-  }
+    if (!username || !password) {
+      return res.status(400).json({ error: "Isi semua field" })
+    }
 
-  db.query("SELECT * FROM auth_users WHERE username = ?", [username], async (err, result) => {
-    if (err) return res.status(500).json({ error: err.message })
+    const [existing] = await db.query(
+      "SELECT * FROM auth_users WHERE username = ?",
+      [username]
+    )
 
-    if (result.length > 0) {
-      return res.json({ success: false, message: "Username sudah ada" })
+    if (existing.length > 0) {
+      return res.json({ success: false })
     }
 
     const hash = await bcrypt.hash(password, 10)
 
-    db.query(
+    await db.query(
       "INSERT INTO auth_users (username, password) VALUES (?, ?)",
-      [username, hash],
-      (err) => {
-        if (err) return res.status(500).json({ error: err.message })
-        res.json({ success: true })
-      }
+      [username, hash]
     )
-  })
+
+    res.json({ success: true })
+
+  } catch (err) {
+    console.error("REGISTER ERROR:", err)
+    res.status(500).json({ error: "Server error" })
+  }
 })
 
 // ================= LOGIN =================
-app.post("/login", (req, res) => {
-  const { username, password } = req.body
+app.post("/login", async (req, res) => {
+  try {
+    const { username, password } = req.body
 
-  db.query("SELECT * FROM auth_users WHERE username = ?", [username], async (err, result) => {
-    if (err) return res.status(500).json({ error: err.message })
+    const [users] = await db.query(
+      "SELECT * FROM auth_users WHERE username = ?",
+      [username]
+    )
 
-    if (!result || result.length === 0) {
+    if (users.length === 0) {
       return res.json({ success: false })
     }
 
-    const user = result[0]
+    const user = users[0]
     const match = await bcrypt.compare(password, user.password)
 
-    if (match) {
-      req.session.user = username
-      res.json({ success: true })
-    } else {
-      res.json({ success: false })
+    if (!match) {
+      return res.json({ success: false })
     }
-  })
+
+    req.session.user = username
+
+    res.json({ success: true })
+
+  } catch (err) {
+    console.error("LOGIN ERROR:", err)
+    res.status(500).json({ error: "Server error" })
+  }
 })
 
 // ================= CHECK AUTH =================
@@ -139,50 +145,80 @@ app.get("/logout", (req, res) => {
 })
 
 // ================= CRUD =================
-app.post("/users", isAuth, (req, res) => {
-  const { name, email } = req.body
+app.post("/users", isAuth, async (req, res) => {
+  try {
+    const { name, email } = req.body
 
-  db.query("INSERT INTO users (name,email) VALUES (?,?)", [name, email], (err) => {
-    if (err) return res.status(500).json({ error: err.message })
+    await db.query(
+      "INSERT INTO users (name,email) VALUES (?,?)",
+      [name, email]
+    )
+
     res.json({ success: true })
-  })
+
+  } catch (err) {
+    res.status(500).json({ error: err.message })
+  }
 })
 
-app.get("/users", isAuth, (req, res) => {
-  db.query("SELECT * FROM users", (err, data) => {
-    if (err) return res.status(500).json({ error: err.message })
+app.get("/users", isAuth, async (req, res) => {
+  try {
+    const [data] = await db.query("SELECT * FROM users")
     res.json(data)
-  })
+  } catch (err) {
+    res.status(500).json({ error: err.message })
+  }
 })
 
-app.delete("/users/:id", isAuth, (req, res) => {
-  db.query("DELETE FROM users WHERE id=?", [req.params.id], (err) => {
-    if (err) return res.status(500).json({ error: err.message })
+app.delete("/users/:id", isAuth, async (req, res) => {
+  try {
+    await db.query("DELETE FROM users WHERE id=?", [req.params.id])
     res.json({ success: true })
-  })
+  } catch (err) {
+    res.status(500).json({ error: err.message })
+  }
 })
 
-app.put("/users/:id", isAuth, (req, res) => {
-  const { name, email } = req.body
+app.put("/users/:id", isAuth, async (req, res) => {
+  try {
+    const { name, email } = req.body
 
-  db.query("UPDATE users SET name=?,email=? WHERE id=?", [name, email, req.params.id], (err) => {
-    if (err) return res.status(500).json({ error: err.message })
+    await db.query(
+      "UPDATE users SET name=?,email=? WHERE id=?",
+      [name, email, req.params.id]
+    )
+
     res.json({ success: true })
-  })
+
+  } catch (err) {
+    res.status(500).json({ error: err.message })
+  }
 })
 
 // ================= DEBUG =================
-app.get("/debug-users", (req, res) => {
-  db.query("SELECT * FROM auth_users", (err, data) => {
-    if (err) return res.json({ error: err.message })
+app.get("/debug-users", async (req, res) => {
+  try {
+    const [data] = await db.query("SELECT * FROM auth_users")
     res.json(data)
-  })
+  } catch (err) {
+    res.json({ error: err.message })
+  }
 })
 
 // ================= ROOT =================
 app.get("/", (req, res) => {
-  res.send("SERVER FINAL FIX V2 🚀")
+  res.send("SERVER FINAL FIX 🚀")
 })
+
+// ================= KEEP ALIVE =================
+setInterval(async () => {
+  try {
+    await db.query("SELECT 1")
+    console.log("✅ DB KeepAlive OK")
+  } catch (err) {
+    console.error("❌ KeepAlive DB Error:", err.message)
+  }
+}, 5000)
 
 // ================= START =================
 const PORT = process.env.PORT || 3000
@@ -190,13 +226,3 @@ const PORT = process.env.PORT || 3000
 app.listen(PORT, () => {
   console.log("Server jalan di port", PORT)
 })
-
-setInterval(() => {
-  db.query("SELECT 1", (err) => {
-    if (err) {
-      console.error("❌ KeepAlive DB Error:", err.message)
-    } else {
-      console.log("✅ DB KeepAlive OK")
-    }
-  })
-}, 5000)
