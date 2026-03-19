@@ -129,7 +129,10 @@ app.put("/users/:id", isAuth, (req, res) => {
 })
 
 const PORT = process.env.PORT || 3000
-app.listen(PORT, () => console.log("🚀 Server running"))
+
+app.listen(PORT, () => {
+  console.log("Server jalan di port", PORT)
+})
 
 function isAuth(req, res, next) {
   if (req.session.user) {
@@ -139,3 +142,6 @@ function isAuth(req, res, next) {
   }
 }
 
+app.get("/", (req, res) => {
+  res.sendFile(__dirname + "/public/index.html")
+})
