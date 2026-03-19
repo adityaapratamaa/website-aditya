@@ -24,6 +24,7 @@ app.use(session({
     httpOnly: true
   }
 }))
+
 // DATABASE
 const db = mysql.createConnection("mysql://root:ZJVcIRKGGXzPCRIrCGqbGhENEoJCFWaZ@autorack.proxy.rlwy.net:51186/railway")
 
@@ -61,9 +62,14 @@ app.post("/login", (req, res) => {
 
   db.query("SELECT * FROM auth_users WHERE username = ?", [username], async (err, result) => {
     if (err) return res.status(500).send(err)
-    if (result.length === 0) return res.json({ success: false })
 
-    const match = await bcrypt.compare(password, result[0].password)
+    if (!result || result.length === 0) {
+      return res.json({ success: false })
+    }
+
+    const user = result[0]
+
+    const match = await bcrypt.compare(password, user.password)
 
     if (match) {
       req.session.user = username
