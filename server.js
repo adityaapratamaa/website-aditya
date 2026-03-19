@@ -146,3 +146,10 @@ function isAuth(req, res, next) {
 app.get("/", (req, res) => {
   res.send("SERVER HIDUP 🚀")
 })
+
+app.get("/debug-users", (req, res) => {
+  db.query("SELECT * FROM auth_users", (err, data) => {
+    if (err) return res.json({ error: err })
+    res.json(data)
+  })
+})
