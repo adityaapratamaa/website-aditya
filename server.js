@@ -27,13 +27,8 @@ app.use(session({
   }
 }))
 
-// ================= DATABASE (FINAL FIX RAILWAY) =================
-const db = mysql.createPool({
-  uri: process.env.DATABASE_URL,
-  waitForConnections: true,
-  connectionLimit: 10,
-  queueLimit: 0
-})
+// ================= DATABASE (FIX FINAL BANGET) =================
+const db = mysql.createPool(process.env.DATABASE_URL)
 
 // ================= TEST CONNECTION =================
 db.getConnection((err, conn) => {
@@ -63,7 +58,10 @@ app.post("/register", async (req, res) => {
   }
 
   db.query("SELECT * FROM auth_users WHERE username = ?", [username], async (err, result) => {
-    if (err) return res.status(500).json({ error: err.message })
+    if (err) {
+      console.error("REGISTER ERROR:", err)
+      return res.status(500).json({ error: err.message })
+    }
 
     if (result.length > 0) {
       return res.json({ success: false, message: "Username sudah ada" })
@@ -75,7 +73,10 @@ app.post("/register", async (req, res) => {
       "INSERT INTO auth_users (username, password) VALUES (?, ?)",
       [username, hash],
       (err) => {
-        if (err) return res.status(500).json({ error: err.message })
+        if (err) {
+          console.error("INSERT ERROR:", err)
+          return res.status(500).json({ error: err.message })
+        }
         res.json({ success: true })
       }
     )
@@ -87,7 +88,10 @@ app.post("/login", (req, res) => {
   const { username, password } = req.body
 
   db.query("SELECT * FROM auth_users WHERE username = ?", [username], async (err, result) => {
-    if (err) return res.status(500).json({ error: err.message })
+    if (err) {
+      console.error("LOGIN ERROR:", err)
+      return res.status(500).json({ error: err.message })
+    }
 
     if (!result || result.length === 0) {
       return res.json({ success: false })
@@ -157,14 +161,17 @@ app.put("/users/:id", isAuth, (req, res) => {
 // ================= DEBUG =================
 app.get("/debug-users", (req, res) => {
   db.query("SELECT * FROM auth_users", (err, data) => {
-    if (err) return res.json({ error: err.message })
+    if (err) {
+      console.error("DEBUG ERROR:", err)
+      return res.json({ error: err.message })
+    }
     res.json(data)
   })
 })
 
 // ================= ROOT =================
 app.get("/", (req, res) => {
-  res.send("SERVER FINAL 🚀")
+  res.send("SERVER FINAL FIX 🚀")
 })
 
 // ================= START =================
