@@ -27,16 +27,9 @@ app.use(session({
   }
 }))
 
-// ================= DATABASE (FIX TOTAL) =================
+// ================= DATABASE (FINAL FIX RAILWAY) =================
 const db = mysql.createPool({
-  host: "autorack.proxy.rlwy.net",
-  user: "root",
-  password: "ZJVcIRKGGXzPCRIrCGqbGhENEoJCFWaZ",
-  database: "railway",
-  port: 51186,
-  ssl: {
-    rejectUnauthorized: false
-  },
+  uri: process.env.DATABASE_URL,
   waitForConnections: true,
   connectionLimit: 10,
   queueLimit: 0
@@ -45,9 +38,9 @@ const db = mysql.createPool({
 // ================= TEST CONNECTION =================
 db.getConnection((err, conn) => {
   if (err) {
-    console.error("❌ DB CONNECTION ERROR:", err)
+    console.error("❌ DB ERROR:", err)
   } else {
-    console.log("✅ Database connected")
+    console.log("✅ DB CONNECTED")
     conn.release()
   }
 })
@@ -66,36 +59,26 @@ app.post("/register", async (req, res) => {
   const { username, password } = req.body
 
   if (!username || !password) {
-    return res.status(400).json({ error: "Username & password wajib diisi" })
+    return res.status(400).json({ error: "Isi semua field" })
   }
 
   db.query("SELECT * FROM auth_users WHERE username = ?", [username], async (err, result) => {
-    if (err) {
-      console.error("REGISTER ERROR:", err)
-      return res.status(500).json({ error: err.message })
-    }
+    if (err) return res.status(500).json({ error: err.message })
 
     if (result.length > 0) {
       return res.json({ success: false, message: "Username sudah ada" })
     }
 
-    try {
-      const hash = await bcrypt.hash(password, 10)
+    const hash = await bcrypt.hash(password, 10)
 
-      db.query(
-        "INSERT INTO auth_users (username, password) VALUES (?, ?)",
-        [username, hash],
-        (err) => {
-          if (err) {
-            console.error("INSERT ERROR:", err)
-            return res.status(500).json({ error: err.message })
-          }
-          res.json({ success: true })
-        }
-      )
-    } catch (error) {
-      res.status(500).json({ error: "Hash error" })
-    }
+    db.query(
+      "INSERT INTO auth_users (username, password) VALUES (?, ?)",
+      [username, hash],
+      (err) => {
+        if (err) return res.status(500).json({ error: err.message })
+        res.json({ success: true })
+      }
+    )
   })
 })
 
@@ -104,28 +87,20 @@ app.post("/login", (req, res) => {
   const { username, password } = req.body
 
   db.query("SELECT * FROM auth_users WHERE username = ?", [username], async (err, result) => {
-    if (err) {
-      console.error("LOGIN ERROR:", err)
-      return res.status(500).json({ error: err.message })
-    }
+    if (err) return res.status(500).json({ error: err.message })
 
     if (!result || result.length === 0) {
       return res.json({ success: false })
     }
 
     const user = result[0]
+    const match = await bcrypt.compare(password, user.password)
 
-    try {
-      const match = await bcrypt.compare(password, user.password)
-
-      if (match) {
-        req.session.user = username
-        res.json({ success: true })
-      } else {
-        res.json({ success: false })
-      }
-    } catch (error) {
-      res.status(500).json({ error: "Compare error" })
+    if (match) {
+      req.session.user = username
+      res.json({ success: true })
+    } else {
+      res.json({ success: false })
     }
   })
 })
@@ -146,35 +121,26 @@ app.get("/logout", (req, res) => {
   })
 })
 
-// ================= CRUD USERS =================
+// ================= CRUD =================
 app.post("/users", isAuth, (req, res) => {
   const { name, email } = req.body
 
   db.query("INSERT INTO users (name,email) VALUES (?,?)", [name, email], (err) => {
-    if (err) {
-      console.error("INSERT USER ERROR:", err)
-      return res.status(500).json({ error: err.message })
-    }
+    if (err) return res.status(500).json({ error: err.message })
     res.json({ success: true })
   })
 })
 
 app.get("/users", isAuth, (req, res) => {
   db.query("SELECT * FROM users", (err, data) => {
-    if (err) {
-      console.error("GET USERS ERROR:", err)
-      return res.status(500).json({ error: err.message })
-    }
+    if (err) return res.status(500).json({ error: err.message })
     res.json(data)
   })
 })
 
 app.delete("/users/:id", isAuth, (req, res) => {
   db.query("DELETE FROM users WHERE id=?", [req.params.id], (err) => {
-    if (err) {
-      console.error("DELETE ERROR:", err)
-      return res.status(500).json({ error: err.message })
-    }
+    if (err) return res.status(500).json({ error: err.message })
     res.json({ success: true })
   })
 })
@@ -183,10 +149,7 @@ app.put("/users/:id", isAuth, (req, res) => {
   const { name, email } = req.body
 
   db.query("UPDATE users SET name=?,email=? WHERE id=?", [name, email, req.params.id], (err) => {
-    if (err) {
-      console.error("UPDATE ERROR:", err)
-      return res.status(500).json({ error: err.message })
-    }
+    if (err) return res.status(500).json({ error: err.message })
     res.json({ success: true })
   })
 })
@@ -194,17 +157,14 @@ app.put("/users/:id", isAuth, (req, res) => {
 // ================= DEBUG =================
 app.get("/debug-users", (req, res) => {
   db.query("SELECT * FROM auth_users", (err, data) => {
-    if (err) {
-      console.error("DEBUG ERROR:", err)
-      return res.json({ error: err.message })
-    }
+    if (err) return res.json({ error: err.message })
     res.json(data)
   })
 })
 
 // ================= ROOT =================
 app.get("/", (req, res) => {
-  res.send("SERVER HIDUP V99999 🚀")
+  res.send("SERVER FINAL 🚀")
 })
 
 // ================= START =================
