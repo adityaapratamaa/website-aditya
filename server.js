@@ -136,8 +136,7 @@ function isAuth(req, res, next) {
   }
 }
 
-app.get("/", (req, res) => {
-  res.sendFile(__dirname + "/public/index.html")
-})
 
-console.log("ENV CHECK:", process.env.DB_HOST)
+app.get("/", (req, res) => {
+  res.send("SERVER HIDUP 🚀")
+})
