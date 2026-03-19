@@ -201,7 +201,7 @@ app.get("/debug-users", (req, res) => {
 
 // ================= ROOT =================
 app.get("/", (req, res) => {
-  res.send("SERVER HIDUP V2 🚀")
+  res.send("SERVER HIDUP V99999 🚀")
 })
 
 // ================= START =================
