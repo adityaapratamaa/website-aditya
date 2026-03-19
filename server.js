@@ -13,13 +13,15 @@ app.use(cors({
 
 app.use(express.json())
 
+app.set("trust proxy", 1)
 app.use(session({
   secret: "aditya-super-secret-key-2026-very-secure",
   resave: false,
   saveUninitialized: false,
   cookie: {
     secure: true,
-    sameSite: "none"
+    sameSite: "none",
+    httpOnly: true
   }
 }))
 
