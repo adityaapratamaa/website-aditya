@@ -6,10 +6,11 @@ const session = require("express-session")
 
 const app = express()
 
-if (!process.env.MYSQLHOST) {
-  console.error("❌ MYSQL ENV KOSONG!")
-  process.exit(1)
-}
+// ================= DEBUG ENV =================
+console.log("ENV CHECK:")
+console.log("HOST:", process.env.MYSQLHOST)
+console.log("USER:", process.env.MYSQLUSER)
+console.log("DB:", process.env.MYSQLDATABASE)
 
 // ================= CORS =================
 app.use(cors({
@@ -32,19 +33,19 @@ app.use(session({
   }
 }))
 
-// ================= DATABASE (FIX FINAL BANGET) =================
+// ================= DATABASE FINAL =================
 const db = mysql.createPool({
-  host: process.env.MYSQLHOST,
-  user: process.env.MYSQLUSER,
-  password: process.env.MYSQLPASSWORD,
-  database: process.env.MYSQLDATABASE,
-  port: process.env.MYSQLPORT,
+  host: process.env.MYSQLHOST || "localhost",
+  user: process.env.MYSQLUSER || "root",
+  password: process.env.MYSQLPASSWORD || "",
+  database: process.env.MYSQLDATABASE || "railway",
+  port: process.env.MYSQLPORT || 3306,
   waitForConnections: true,
   connectionLimit: 10,
   queueLimit: 0
 })
 
-// TEST CONNECTION
+// ================= TEST CONNECTION =================
 db.getConnection((err, conn) => {
   if (err) {
     console.error("❌ DB ERROR:", err)
@@ -53,6 +54,16 @@ db.getConnection((err, conn) => {
     conn.release()
   }
 })
+
+// ================= AUTH MIDDLEWARE =================
+function isAuth(req, res, next) {
+  if (req.session.user) {
+    next()
+  } else {
+    res.status(401).json({ message: "Unauthorized" })
+  }
+}
+
 // ================= REGISTER =================
 app.post("/register", async (req, res) => {
   const { username, password } = req.body
@@ -62,10 +73,7 @@ app.post("/register", async (req, res) => {
   }
 
   db.query("SELECT * FROM auth_users WHERE username = ?", [username], async (err, result) => {
-    if (err) {
-      console.error("REGISTER ERROR:", err)
-      return res.status(500).json({ error: err.message })
-    }
+    if (err) return res.status(500).json({ error: err.message })
 
     if (result.length > 0) {
       return res.json({ success: false, message: "Username sudah ada" })
@@ -77,10 +85,7 @@ app.post("/register", async (req, res) => {
       "INSERT INTO auth_users (username, password) VALUES (?, ?)",
       [username, hash],
       (err) => {
-        if (err) {
-          console.error("INSERT ERROR:", err)
-          return res.status(500).json({ error: err.message })
-        }
+        if (err) return res.status(500).json({ error: err.message })
         res.json({ success: true })
       }
     )
@@ -92,10 +97,7 @@ app.post("/login", (req, res) => {
   const { username, password } = req.body
 
   db.query("SELECT * FROM auth_users WHERE username = ?", [username], async (err, result) => {
-    if (err) {
-      console.error("LOGIN ERROR:", err)
-      return res.status(500).json({ error: err.message })
-    }
+    if (err) return res.status(500).json({ error: err.message })
 
     if (!result || result.length === 0) {
       return res.json({ success: false })
@@ -165,17 +167,14 @@ app.put("/users/:id", isAuth, (req, res) => {
 // ================= DEBUG =================
 app.get("/debug-users", (req, res) => {
   db.query("SELECT * FROM auth_users", (err, data) => {
-    if (err) {
-      console.error("DEBUG ERROR:", err)
-      return res.json({ error: err.message })
-    }
+    if (err) return res.json({ error: err.message })
     res.json(data)
   })
 })
 
 // ================= ROOT =================
 app.get("/", (req, res) => {
-  res.send("SERVER FINAL FIX 🚀")
+  res.send("SERVER FINAL FIX V2 🚀")
 })
 
 // ================= START =================
