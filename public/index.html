@@ -1,116 +1,128 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-  <meta charset="UTF-8">
-  <title>CRUD Website</title>
+<meta charset="UTF-8">
+<title>CRUD Website</title>
 
-  <style>
-    body {
-      font-family: 'Segoe UI', sans-serif;
-      background: linear-gradient(135deg, #0f172a, #020617);
-      color: #e2e8f0;
-      padding: 20px;
-    }
+<style>
+body{
+  font-family:'Segoe UI',sans-serif;
+  background:linear-gradient(135deg,#020617,#020617,#020617,#0f172a);
+  color:#e2e8f0;
+  margin:0;
+}
 
-    .top {
-      display: flex;
-      justify-content: space-between;
-      padding: 20px 40px;
-    }
+.top{
+  display:flex;
+  justify-content:space-between;
+  padding:25px 40px;
+}
 
-    .logout {
-      background: #ef4444;
-      color: white;
-      border: none;
-      padding: 8px 14px;
-      border-radius: 8px;
-      cursor: pointer;
-    }
+.logout{
+  background:#ef4444;
+  border:none;
+  padding:10px 16px;
+  border-radius:10px;
+  color:white;
+  cursor:pointer;
+  transition:.3s;
+}
+.logout:hover{transform:scale(1.05)}
 
-    .container {
-      max-width: 800px;
-      margin: auto;
-      background: #1e293b;
-      padding: 30px;
-      border-radius: 20px;
-      box-shadow: 0 15px 40px rgba(0,0,0,0.6);
-    }
+.container{
+  max-width:800px;
+  margin:40px auto;
+  background:#1e293b;
+  padding:30px;
+  border-radius:20px;
+  box-shadow:0 15px 40px rgba(0,0,0,.6);
+}
 
-    input {
-      width: 100%;
-      padding: 14px;
-      margin: 8px 0;
-      border-radius: 10px;
-      border: none;
-      background: #334155;
-      color: white;
-    }
+input{
+  width:100%;
+  padding:14px;
+  margin:10px 0;
+  border-radius:10px;
+  border:none;
+  background:#334155;
+  color:white;
+}
 
-    button {
-      padding: 10px 16px;
-      border-radius: 10px;
-      border: none;
-      color: white;
-      cursor: pointer;
-      transition: 0.3s;
-    }
+button{
+  padding:10px 16px;
+  border:none;
+  border-radius:10px;
+  cursor:pointer;
+  color:white;
+  transition:.3s;
+}
+button:hover{transform:scale(1.05)}
 
-    button:hover { transform: scale(1.05); }
+.btn-add{
+  background:linear-gradient(135deg,#3b82f6,#2563eb);
+}
 
-    .user {
-      background: #0f172a;
-      padding: 15px;
-      margin-top: 12px;
-      border-radius: 12px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
+.user{
+  background:#0f172a;
+  padding:15px;
+  margin-top:12px;
+  border-radius:12px;
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  animation:fadeIn .4s ease;
+}
 
-    .actions { display: flex; gap: 10px; }
+.actions{display:flex;gap:10px}
 
-    .edit-btn { background: #f59e0b; }
-    .delete-btn { background: #ef4444; }
+.edit-btn{background:#f59e0b}
+.delete-btn{background:#ef4444}
 
-    /* MODAL */
-    .modal {
-      display: none;
-      position: fixed;
-      top: 0; left: 0;
-      width: 100%; height: 100%;
-      background: rgba(0,0,0,0.7);
-      justify-content: center;
-      align-items: center;
-    }
+@keyframes fadeIn{
+  from{opacity:0;transform:translateY(10px)}
+  to{opacity:1;transform:translateY(0)}
+}
 
-    .modal-content {
-      background: #1e293b;
-      padding: 25px;
-      border-radius: 12px;
-      text-align: center;
-      transform: scale(0.8);
-      opacity: 0;
-      transition: 0.3s;
-    }
+/* MODAL */
+.modal{
+  display:none;
+  position:fixed;
+  top:0;left:0;
+  width:100%;height:100%;
+  background:rgba(0,0,0,.7);
+  justify-content:center;
+  align-items:center;
+  backdrop-filter:blur(5px);
+}
 
-    .modal.show .modal-content {
-      transform: scale(1);
-      opacity: 1;
-    }
+.modal-content{
+  background:#1e293b;
+  padding:25px;
+  border-radius:15px;
+  text-align:center;
+  transform:scale(.7);
+  opacity:0;
+  transition:.3s;
+}
 
-    /* TOAST */
-    #toast {
-      position: fixed;
-      bottom: 20px;
-      right: 20px;
-      padding: 10px 20px;
-      border-radius: 8px;
-      color: white;
-      opacity: 0;
-      transform: translateY(20px);
-      transition: 0.3s;
-    }
-  </style>
+.modal.show .modal-content{
+  transform:scale(1);
+  opacity:1;
+}
+
+/* TOAST */
+#toast{
+  position:fixed;
+  bottom:20px;
+  right:20px;
+  padding:12px 20px;
+  border-radius:10px;
+  color:white;
+  opacity:0;
+  transform:translateY(20px);
+  transition:.3s;
+}
+</style>
 </head>
 
 <body>
@@ -123,7 +135,7 @@
 <div class="container">
   <input id="name" placeholder="Nama">
   <input id="email" placeholder="Email">
-  <button onclick="add()">Tambah</button>
+  <button class="btn-add" onclick="add()">Tambah</button>
 
   <hr>
 
@@ -131,19 +143,19 @@
   <div id="list"></div>
 </div>
 
-<!-- EDIT MODAL -->
+<!-- EDIT -->
 <div id="modal" class="modal">
   <div class="modal-content">
     <h3>Edit User</h3>
     <input id="editName">
     <input id="editEmail">
     <br><br>
-    <button onclick="updateUser()">Simpan</button>
+    <button onclick="updateUser()" class="btn-add">Simpan</button>
     <button onclick="closeModal()">Batal</button>
   </div>
 </div>
 
-<!-- DELETE MODAL -->
+<!-- DELETE -->
 <div id="deleteModal" class="modal">
   <div class="modal-content">
     <h3>Yakin hapus?</h3>
@@ -156,19 +168,19 @@
 <div id="toast"></div>
 
 <script>
-let allUsers = []
-let selectedId = null
-let deleteId = null
+let allUsers=[]
+let selectedId=null
+let deleteId=null
 
 load()
 
 function load(){
   fetch("https://website-aditya-production.up.railway.app/users")
-    .then(res=>res.json())
-    .then(data=>{
-      allUsers=data
-      render(data)
-    })
+  .then(res=>res.json())
+  .then(data=>{
+    allUsers=data
+    render(data)
+  })
 }
 
 function render(data){
@@ -188,16 +200,18 @@ function render(data){
 }
 
 function add(){
-  const name=nameInput.value||document.getElementById("name").value
+  const name=document.getElementById("name").value
   const email=document.getElementById("email").value
+
+  if(!name||!email) return showToast("Isi semua","error")
 
   fetch("https://website-aditya-production.up.railway.app/users",{
     method:"POST",
     headers:{"Content-Type":"application/json"},
     body:JSON.stringify({name,email})
   }).then(()=>{
-    document.getElementById("name").value=""
-    document.getElementById("email").value=""
+    name.value=""
+    email.value=""
     load()
     showToast("Berhasil")
   })
@@ -244,7 +258,6 @@ function confirmDelete(){
   })
 }
 
-// CLOSE
 function closeModal(){
   modal.classList.remove("show")
   setTimeout(()=>modal.style.display="none",200)
@@ -255,7 +268,6 @@ function closeDeleteModal(){
   setTimeout(()=>deleteModal.style.display="none",200)
 }
 
-// SEARCH
 function searchUser(){
   const k=search.value.toLowerCase()
   render(allUsers.filter(u=>
@@ -264,12 +276,10 @@ function searchUser(){
   ))
 }
 
-// LOGOUT
 function logout(){
   location.href="login.html"
 }
 
-// TOAST
 function showToast(msg,type="success"){
   const t=toast
   t.innerText=msg
