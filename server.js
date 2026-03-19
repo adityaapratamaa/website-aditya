@@ -16,15 +16,14 @@ app.use(cors({
 
 app.use(express.json())
 
-// ✅ SESSION FIX
+// ✅ SESSION (hanya untuk login)
 app.use(session({
-  secret: "aditya-secret",
+  secret: "secret-key",
   resave: false,
   saveUninitialized: false,
   cookie: {
     secure: true,
-    sameSite: "none",
-    httpOnly: true
+    sameSite: "none"
   }
 }))
 
@@ -109,7 +108,7 @@ app.get("/logout", (req, res) => {
   })
 })
 
-// ================= CRUD =================
+// ================= CRUD (NO SESSION BUG) =================
 
 // GET USERS
 app.get("/users", async (req, res) => {
@@ -117,7 +116,7 @@ app.get("/users", async (req, res) => {
     const [data] = await db.query("SELECT * FROM users ORDER BY id DESC")
     res.json(data)
   } catch (err) {
-    console.error("GET ERROR:", err)
+    console.error("GET USERS ERROR:", err)
     res.status(500).json({ error: err.message })
   }
 })
@@ -149,7 +148,7 @@ app.delete("/users/:id", async (req, res) => {
     await db.query("DELETE FROM users WHERE id=?", [req.params.id])
     res.json({ success: true })
   } catch (err) {
-    console.error(err)
+    console.error("DELETE ERROR:", err)
     res.status(500).json({ error: err.message })
   }
 })
@@ -166,7 +165,7 @@ app.put("/users/:id", async (req, res) => {
 
     res.json({ success: true })
   } catch (err) {
-    console.error(err)
+    console.error("UPDATE ERROR:", err)
     res.status(500).json({ error: err.message })
   }
 })
