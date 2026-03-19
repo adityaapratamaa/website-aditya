@@ -27,12 +27,26 @@ app.use(session({
   }
 }))
 
-// ================= DATABASE (FIX RAILWAY) =================
+// ================= DATABASE (FIX TOTAL) =================
 const db = mysql.createPool({
-  uri: "mysql://root:ZJVcIRKGGXzPCRIrCGqbGhENEoJCFWaZ@autorack.proxy.rlwy.net:51186/railway",
+  host: "autorack.proxy.rlwy.net",
+  user: "root",
+  password: "ZJVcIRKGGXzPCRIrCGqbGhENEoJCFWaZ",
+  database: "railway",
+  port: 51186,
   waitForConnections: true,
   connectionLimit: 10,
   queueLimit: 0
+})
+
+// ================= TEST CONNECTION =================
+db.getConnection((err, conn) => {
+  if (err) {
+    console.error("❌ DB CONNECTION ERROR:", err)
+  } else {
+    console.log("✅ Database connected")
+    conn.release()
+  }
 })
 
 // ================= MIDDLEWARE =================
@@ -187,7 +201,7 @@ app.get("/debug-users", (req, res) => {
 
 // ================= ROOT =================
 app.get("/", (req, res) => {
-  res.send("SERVER HIDUP 🚀")
+  res.send("SERVER HIDUP V2 🚀")
 })
 
 // ================= START =================
