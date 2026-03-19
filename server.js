@@ -25,13 +25,7 @@ app.use(session({
 }))
 
 // DATABASE
-const db = mysql.createConnection({
-  host: process.env.DB_HOST,
-user: process.env.DB_USER,
-password: process.env.DB_PASSWORD,
-database: process.env.DB_NAME,
-port: process.env.DB_PORT
-})
+const db = mysql.createConnection("mysql://root:ZJVcIRKGGXzPCRIrCGqbGhENEoJCFWaZ@autorack.proxy.rlwy.net:51186/railway")
 
 db.connect((err) => {
   if (err) {
@@ -145,3 +139,5 @@ function isAuth(req, res, next) {
 app.get("/", (req, res) => {
   res.sendFile(__dirname + "/public/index.html")
 })
+
+console.log("ENV CHECK:", process.env.DB_HOST)
