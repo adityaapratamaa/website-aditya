@@ -136,6 +136,16 @@ button:hover{transform:scale(1.05)}
   transform:translateY(20px);
   transition:.3s;
 }
+
+.btn-cancel{
+  background:#e5e7eb;
+  color:#1e293b;
+}
+
+.btn-cancel:hover{
+  background:#cbd5f5;
+}
+
 </style>
 </head>
 
@@ -165,7 +175,7 @@ button:hover{transform:scale(1.05)}
     <input id="editEmail">
     <br><br>
     <button onclick="updateUser()" class="btn-add">Simpan</button>
-    <button onclick="closeModal()">Batal</button>
+    <button onclick="closeModal()" class="btn-cancel">Batal</button>
   </div>
 </div>
 
@@ -175,7 +185,7 @@ button:hover{transform:scale(1.05)}
     <h3>Yakin hapus?</h3>
     <br>
     <button onclick="confirmDelete()" class="delete-btn">Hapus</button>
-    <button onclick="closeDeleteModal()">Batal</button>
+    <button onclick="closeDeleteModal()" class="btn-cancel">Batal</button>
   </div>
 </div>
 
