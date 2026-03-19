@@ -15,16 +15,15 @@
     .top {
       display: flex;
       justify-content: space-between;
-      align-items: center;
       padding: 20px 40px;
     }
 
     .logout {
-      padding: 8px 14px;
-      border-radius: 8px;
-      border: none;
       background: #ef4444;
       color: white;
+      border: none;
+      padding: 8px 14px;
+      border-radius: 8px;
       cursor: pointer;
     }
 
@@ -38,31 +37,34 @@
     }
 
     input {
+      width: 100%;
       padding: 14px;
       margin: 8px 0;
-      width: 100%;
       border-radius: 10px;
+      border: none;
       background: #334155;
       color: white;
-      border: none;
     }
 
     button {
-      padding: 12px;
+      padding: 10px 16px;
       border-radius: 10px;
-      background: linear-gradient(135deg, #3b82f6, #2563eb);
       border: none;
       color: white;
       cursor: pointer;
+      transition: 0.3s;
     }
 
+    button:hover { transform: scale(1.05); }
+
     .user {
+      background: #0f172a;
       padding: 15px;
       margin-top: 12px;
-      background: #0f172a;
       border-radius: 12px;
       display: flex;
       justify-content: space-between;
+      align-items: center;
     }
 
     .actions { display: flex; gap: 10px; }
@@ -70,14 +72,42 @@
     .edit-btn { background: #f59e0b; }
     .delete-btn { background: #ef4444; }
 
+    /* MODAL */
+    .modal {
+      display: none;
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      background: rgba(0,0,0,0.7);
+      justify-content: center;
+      align-items: center;
+    }
+
+    .modal-content {
+      background: #1e293b;
+      padding: 25px;
+      border-radius: 12px;
+      text-align: center;
+      transform: scale(0.8);
+      opacity: 0;
+      transition: 0.3s;
+    }
+
+    .modal.show .modal-content {
+      transform: scale(1);
+      opacity: 1;
+    }
+
+    /* TOAST */
     #toast {
       position: fixed;
       bottom: 20px;
       right: 20px;
-      padding: 12px 20px;
+      padding: 10px 20px;
       border-radius: 8px;
       color: white;
       opacity: 0;
+      transform: translateY(20px);
       transition: 0.3s;
     }
   </style>
@@ -86,13 +116,11 @@
 <body>
 
 <div class="top">
-  <h2 id="welcome"></h2>
+  <h2>Data Users</h2>
   <button class="logout" onclick="logout()">Logout</button>
 </div>
 
 <div class="container">
-  <h2>Data Users</h2>
-
   <input id="name" placeholder="Nama">
   <input id="email" placeholder="Email">
   <button onclick="add()">Tambah</button>
@@ -103,84 +131,155 @@
   <div id="list"></div>
 </div>
 
+<!-- EDIT MODAL -->
+<div id="modal" class="modal">
+  <div class="modal-content">
+    <h3>Edit User</h3>
+    <input id="editName">
+    <input id="editEmail">
+    <br><br>
+    <button onclick="updateUser()">Simpan</button>
+    <button onclick="closeModal()">Batal</button>
+  </div>
+</div>
+
+<!-- DELETE MODAL -->
+<div id="deleteModal" class="modal">
+  <div class="modal-content">
+    <h3>Yakin hapus?</h3>
+    <br>
+    <button onclick="confirmDelete()" class="delete-btn">Hapus</button>
+    <button onclick="closeDeleteModal()">Batal</button>
+  </div>
+</div>
+
 <div id="toast"></div>
 
 <script>
 let allUsers = []
+let selectedId = null
+let deleteId = null
 
-// ❌ HAPUS VALIDASI LOGIN (INI PENYEBAB NENDANG)
-// LANGSUNG LOAD
 load()
 
-function load() {
+function load(){
   fetch("https://website-aditya-production.up.railway.app/users")
-    .then(res => res.json())
-    .then(data => {
-      allUsers = data
+    .then(res=>res.json())
+    .then(data=>{
+      allUsers=data
       render(data)
     })
-    .catch(err => {
-      console.error(err)
-      showToast("Server error", "error")
-    })
 }
 
-function render(data) {
-  list.innerHTML = ""
-  data.forEach(u => {
-    list.innerHTML += `
-      <div class="user">
-        <div>
-          <b>${u.name}</b><br>${u.email}
-        </div>
-        <div class="actions">
-          <button class="delete-btn" onclick="del(${u.id})">Hapus</button>
-        </div>
-      </div>`
+function render(data){
+  list.innerHTML=""
+  data.forEach(u=>{
+    list.innerHTML+=`
+    <div class="user">
+      <div>
+        <b>${u.name}</b><br>${u.email}
+      </div>
+      <div class="actions">
+        <button class="edit-btn" onclick="openEdit(${u.id},'${encodeURIComponent(u.name)}','${u.email}')">Edit</button>
+        <button class="delete-btn" onclick="openDelete(${u.id})">Hapus</button>
+      </div>
+    </div>`
   })
 }
 
-function add() {
-  const name = document.getElementById("name").value
-  const email = document.getElementById("email").value
+function add(){
+  const name=nameInput.value||document.getElementById("name").value
+  const email=document.getElementById("email").value
 
-  if (!name || !email) return showToast("Isi semua", "error")
-
-  fetch("https://website-aditya-production.up.railway.app/users", {
-    method: "POST",
-    headers: {"Content-Type":"application/json"},
-    body: JSON.stringify({name,email})
-  })
-  .then(()=> {
+  fetch("https://website-aditya-production.up.railway.app/users",{
+    method:"POST",
+    headers:{"Content-Type":"application/json"},
+    body:JSON.stringify({name,email})
+  }).then(()=>{
+    document.getElementById("name").value=""
+    document.getElementById("email").value=""
     load()
     showToast("Berhasil")
   })
 }
 
-function del(id){
-  fetch("https://website-aditya-production.up.railway.app/users/"+id,{
-    method:"DELETE"
-  }).then(()=>load())
+// EDIT
+function openEdit(id,name,email){
+  selectedId=id
+  editName.value=decodeURIComponent(name)
+  editEmail.value=email
+  modal.style.display="flex"
+  setTimeout(()=>modal.classList.add("show"),10)
 }
 
+function updateUser(){
+  fetch("https://website-aditya-production.up.railway.app/users/"+selectedId,{
+    method:"PUT",
+    headers:{"Content-Type":"application/json"},
+    body:JSON.stringify({
+      name:editName.value,
+      email:editEmail.value
+    })
+  }).then(()=>{
+    closeModal()
+    load()
+    showToast("Updated")
+  })
+}
+
+// DELETE
+function openDelete(id){
+  deleteId=id
+  deleteModal.style.display="flex"
+  setTimeout(()=>deleteModal.classList.add("show"),10)
+}
+
+function confirmDelete(){
+  fetch("https://website-aditya-production.up.railway.app/users/"+deleteId,{
+    method:"DELETE"
+  }).then(()=>{
+    closeDeleteModal()
+    load()
+    showToast("Terhapus","error")
+  })
+}
+
+// CLOSE
+function closeModal(){
+  modal.classList.remove("show")
+  setTimeout(()=>modal.style.display="none",200)
+}
+
+function closeDeleteModal(){
+  deleteModal.classList.remove("show")
+  setTimeout(()=>deleteModal.style.display="none",200)
+}
+
+// SEARCH
 function searchUser(){
-  const k = search.value.toLowerCase()
-  render(allUsers.filter(u =>
+  const k=search.value.toLowerCase()
+  render(allUsers.filter(u=>
     u.name.toLowerCase().includes(k) ||
     u.email.toLowerCase().includes(k)
   ))
 }
 
+// LOGOUT
 function logout(){
   location.href="login.html"
 }
 
+// TOAST
 function showToast(msg,type="success"){
   const t=toast
   t.innerText=msg
-  t.style.background=type==="error"?"red":"green"
+  t.style.background=type==="error"?"#ef4444":"#22c55e"
   t.style.opacity=1
-  setTimeout(()=>t.style.opacity=0,1500)
+  t.style.transform="translateY(0)"
+  setTimeout(()=>{
+    t.style.opacity=0
+    t.style.transform="translateY(20px)"
+  },1500)
 }
 </script>
 
