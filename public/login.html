@@ -113,6 +113,7 @@ document.getElementById("form").addEventListener("submit", async (e) => {
   })
 
   const data = await res.json()
+  console.log("LOGIN RESPONSE:", data)
 
   if (data.success) {
     showPopup("✅ Login berhasil!", "success")

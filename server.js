@@ -7,7 +7,7 @@ const session = require("express-session")
 const app = express()
 
 app.use(cors({
-  origin: true,
+  origin: "https://website-aditya-one.vercel.app",
   credentials: true
 }))
 
@@ -24,7 +24,6 @@ app.use(session({
     httpOnly: true
   }
 }))
-
 // DATABASE
 const db = mysql.createConnection("mysql://root:ZJVcIRKGGXzPCRIrCGqbGhENEoJCFWaZ@autorack.proxy.rlwy.net:51186/railway")
 
