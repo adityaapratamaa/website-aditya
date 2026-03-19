@@ -6,6 +6,11 @@ const session = require("express-session")
 
 const app = express()
 
+if (!process.env.MYSQLHOST) {
+  console.error("❌ MYSQL ENV KOSONG!")
+  process.exit(1)
+}
+
 // ================= CORS =================
 app.use(cors({
   origin: "https://website-aditya-one.vercel.app",
@@ -28,27 +33,26 @@ app.use(session({
 }))
 
 // ================= DATABASE (FIX FINAL BANGET) =================
-const db = mysql.createPool(process.env.DATABASE_URL)
+const db = mysql.createPool({
+  host: process.env.MYSQLHOST,
+  user: process.env.MYSQLUSER,
+  password: process.env.MYSQLPASSWORD,
+  database: process.env.MYSQLDATABASE,
+  port: process.env.MYSQLPORT,
+  waitForConnections: true,
+  connectionLimit: 10,
+  queueLimit: 0
+})
 
-// ================= TEST CONNECTION =================
+// TEST CONNECTION
 db.getConnection((err, conn) => {
   if (err) {
     console.error("❌ DB ERROR:", err)
   } else {
-    console.log("✅ DB CONNECTED")
+    console.log("✅ Database connected")
     conn.release()
   }
 })
-
-// ================= MIDDLEWARE =================
-function isAuth(req, res, next) {
-  if (req.session.user) {
-    next()
-  } else {
-    res.status(401).json({ message: "Unauthorized" })
-  }
-}
-
 // ================= REGISTER =================
 app.post("/register", async (req, res) => {
   const { username, password } = req.body
