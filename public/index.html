@@ -196,6 +196,7 @@ const BASE = "https://website-aditya-production.up.railway.app"
 let allUsers=[]
 let selectedId=null
 let deleteId=null
+let currentUser=null
 
 const list = document.getElementById("list")
 const modal = document.getElementById("modal")
@@ -204,8 +205,9 @@ const editName = document.getElementById("editName")
 const editEmail = document.getElementById("editEmail")
 const search = document.getElementById("search")
 const toast = document.getElementById("toast")
+const addBtn = document.querySelector(".btn-add")
 
-// 🔐 CHECK AUTH SEKALI SAJA
+// 🔐 INIT
 async function init(){
   try{
     const res = await fetch(BASE + "/me", {
@@ -215,10 +217,17 @@ async function init(){
     const data = await res.json()
 
     if(!data.loggedIn){
-      window.location.href="login.html"
-    }else{
-      load()
+      return window.location.href="login.html"
     }
+
+    currentUser = data.user
+
+    // 🔥 HIDE BUTTON TAMBAH
+    if(currentUser.role !== "admin"){
+      addBtn.style.display = "none"
+    }
+
+    load()
 
   }catch{
     window.location.href="login.html"
@@ -227,7 +236,7 @@ async function init(){
 
 init()
 
-// LOAD DATA
+// LOAD
 function load(){
   fetch(BASE + "/users",{ credentials:"include" })
   .then(res=>res.json())
@@ -238,25 +247,38 @@ function load(){
   .catch(()=>showToast("Server error","error"))
 }
 
-// RENDER
+// 🔥 RENDER (FIX ROLE)
 function render(data){
   list.innerHTML=""
+
   data.forEach(u=>{
     list.innerHTML+=`
     <div class="user">
       <div>
         <b>${u.name}</b><br>${u.email}
       </div>
+
       <div class="actions">
-        <button class="edit-btn" onclick="openEdit(${u.id},'${encodeURIComponent(u.name)}','${u.email}')">Edit</button>
-        <button class="delete-btn" onclick="openDelete(${u.id})">Hapus</button>
+        ${
+          currentUser.role === "admin"
+          ? `
+            <button class="edit-btn" onclick="openEdit(${u.id},'${encodeURIComponent(u.name)}','${u.email}')">Edit</button>
+            <button class="delete-btn" onclick="openDelete(${u.id})">Hapus</button>
+          `
+          : ""
+        }
       </div>
+
     </div>`
   })
 }
 
 // ADD
 function add(){
+  if(currentUser.role !== "admin"){
+    return showToast("Tidak diizinkan","error")
+  }
+
   const name=document.getElementById("name").value
   const email=document.getElementById("email").value
 
@@ -277,6 +299,8 @@ function add(){
 
 // EDIT
 function openEdit(id,name,email){
+  if(currentUser.role !== "admin") return
+
   selectedId=id
   editName.value=decodeURIComponent(name)
   editEmail.value=email
@@ -302,6 +326,8 @@ function updateUser(){
 
 // DELETE
 function openDelete(id){
+  if(currentUser.role !== "admin") return
+
   deleteId=id
   deleteModal.style.display="flex"
   setTimeout(()=>deleteModal.classList.add("show"),10)
