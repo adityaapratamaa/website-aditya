@@ -6,10 +6,10 @@ const session = require("express-session")
 
 const app = express()
 
-// TRUST PROXY (WAJIB VERCEL/RAILWAY)
+// 🔐 TRUST PROXY (WAJIB UNTUK VERCEL/RAILWAY)
 app.set("trust proxy", 1)
 
-// CORS
+// 🔐 CORS
 app.use(cors({
   origin: "https://website-aditya-one.vercel.app",
   credentials: true
@@ -17,7 +17,7 @@ app.use(cors({
 
 app.use(express.json())
 
-// SESSION
+// 🔐 SESSION
 app.use(session({
   secret: process.env.SESSION_SECRET || "secret-key",
   resave: false,
@@ -31,7 +31,7 @@ app.use(session({
   }
 }))
 
-// DATABASE
+// 🗄 DATABASE
 const db = mysql.createPool({
   uri: process.env.DATABASE_URL,
   ssl: { rejectUnauthorized: false }
@@ -52,7 +52,7 @@ function isAdmin(req, res, next){
   next()
 }
 
-// ================= 🔥 ME (FIX UTAMA) =================
+// ================= ME =================
 app.get("/me", (req, res) => {
   if(req.session.user){
     res.json({
@@ -60,51 +60,49 @@ app.get("/me", (req, res) => {
       user: req.session.user
     })
   }else{
-    res.json({
-      loggedIn: false
-    })
+    res.json({ loggedIn: false })
   }
 })
 
 // ================= REGISTER =================
 app.post("/register", async (req, res) => {
-  try {
+  try{
     const { username, password } = req.body
 
-    if (!username || !password) {
+    if(!username || !password){
       return res.json({ success:false, message:"Data tidak lengkap" })
     }
 
-    if (password.length < 6) {
-      return res.json({ success:false, message:"Password minimal 6 karakter" })
+    if(password.length < 6){
+      return res.json({ success:false, message:"Minimal 6 karakter" })
     }
 
     const hasHuruf = /[A-Za-z]/.test(password)
     const hasAngka = /[0-9]/.test(password)
 
-    if (!hasHuruf || !hasAngka) {
-      return res.json({ success:false, message:"Password harus huruf & angka" })
+    if(!hasHuruf || !hasAngka){
+      return res.json({ success:false, message:"Harus huruf & angka" })
     }
 
-    const [existing] = await db.query(
+    const [cek] = await db.query(
       "SELECT * FROM auth_users WHERE username=?",
       [username]
     )
 
-    if (existing.length > 0) {
-      return res.json({ success:false, message:"Username sudah dipakai" })
+    if(cek.length > 0){
+      return res.json({ success:false, message:"Username sudah ada" })
     }
 
-    const hashed = await bcrypt.hash(password, 10)
+    const hash = await bcrypt.hash(password,10)
 
     await db.query(
-      "INSERT INTO auth_users (username, password) VALUES (?,?)",
-      [username, hashed]
+      "INSERT INTO auth_users (username,password) VALUES (?,?)",
+      [username,hash]
     )
 
     res.json({ success:true })
 
-  } catch (err) {
+  }catch(err){
     console.error(err)
     res.status(500).json({ success:false })
   }
@@ -112,36 +110,36 @@ app.post("/register", async (req, res) => {
 
 // ================= LOGIN =================
 app.post("/login", async (req, res) => {
-  try {
+  try{
     const { username, password } = req.body
 
-    if (!username || !password) {
+    if(!username || !password){
       return res.json({ success:false })
     }
 
-    const [users] = await db.query(
+    const [user] = await db.query(
       "SELECT * FROM auth_users WHERE username=?",
       [username]
     )
 
-    if (users.length === 0) {
+    if(user.length === 0){
       return res.json({ success:false })
     }
 
-    const match = await bcrypt.compare(password, users[0].password)
+    const match = await bcrypt.compare(password, user[0].password)
 
-    if (!match) {
+    if(!match){
       return res.json({ success:false })
     }
 
     req.session.user = {
-      username: users[0].username,
-      role: users[0].role || "user"
+      username: user[0].username,
+      role: user[0].role || "user"
     }
 
     res.json({ success:true })
 
-  } catch (err) {
+  }catch(err){
     console.error(err)
     res.status(500).json({ success:false })
   }
@@ -149,68 +147,73 @@ app.post("/login", async (req, res) => {
 
 // ================= CHANGE PASSWORD =================
 app.post("/change-password", async (req, res) => {
-  try {
-    if (!req.session.user) {
+  try{
+    if(!req.session.user){
       return res.status(401).json({ error:"Unauthorized" })
     }
 
     const { oldPassword, newPassword } = req.body
 
-    if (!oldPassword || !newPassword) {
-      return res.json({ success:false, message:"Data tidak lengkap" })
+    if(!oldPassword || !newPassword){
+      return res.json({ success:false, message:"Data kosong" })
     }
 
-    const [users] = await db.query(
+    const [user] = await db.query(
       "SELECT * FROM auth_users WHERE username=?",
       [req.session.user.username]
     )
 
-    const user = users[0]
+    const match = await bcrypt.compare(oldPassword, user[0].password)
 
-    const match = await bcrypt.compare(oldPassword, user.password)
-
-    if (!match) {
+    if(!match){
       return res.json({ success:false, message:"Password lama salah" })
     }
 
-    if (newPassword.length < 6) {
-      return res.json({ success:false, message:"Password minimal 6 karakter" })
-    }
-
-    const hasHuruf = /[A-Za-z]/.test(newPassword)
-    const hasAngka = /[0-9]/.test(newPassword)
-
-    if (!hasHuruf || !hasAngka) {
-      return res.json({ success:false, message:"Password harus huruf & angka" })
-    }
-
-    const hashed = await bcrypt.hash(newPassword, 10)
+    const hash = await bcrypt.hash(newPassword,10)
 
     await db.query(
       "UPDATE auth_users SET password=? WHERE username=?",
-      [hashed, req.session.user.username]
+      [hash, req.session.user.username]
     )
 
     res.json({ success:true })
 
-  } catch (err) {
+  }catch(err){
     console.error(err)
     res.status(500).json({ success:false })
   }
 })
 
-// ================= LOGOUT =================
-app.get("/logout", (req, res) => {
-  req.session.destroy(() => {
-    res.clearCookie("connect.sid")
-    res.json({ success:true })
-  })
+// ================= STATS (🔥 FIX UTAMA) =================
+app.get("/stats", isAuth, async (req, res) => {
+  try{
+    const [users] = await db.query(
+      "SELECT COUNT(*) as total FROM users"
+    )
+
+    const [accounts] = await db.query(
+      "SELECT COUNT(*) as total FROM auth_users"
+    )
+
+    res.json({
+      totalUsers: users[0].total,
+      totalAccounts: accounts[0].total
+    })
+
+  }catch(err){
+    console.error(err)
+    res.status(500).json({ error:"Server error" })
+  }
 })
 
 // ================= USERS =================
 app.get("/users", isAuth, async (req, res) => {
-  const [data] = await db.query("SELECT * FROM users ORDER BY id DESC")
-  res.json(data)
+  try{
+    const [data] = await db.query("SELECT * FROM users ORDER BY id DESC")
+    res.json(data)
+  }catch{
+    res.status(500).json({ error:"Server error" })
+  }
 })
 
 app.post("/users", isAuth, isAdmin, async (req, res) => {
@@ -218,22 +221,17 @@ app.post("/users", isAuth, isAdmin, async (req, res) => {
     const { name, email } = req.body
 
     if(!name || !email){
-      return res.status(400).json({ error:"Data tidak lengkap" })
-    }
-
-    if(!email.includes("@")){
-      return res.status(400).json({ error:"Email tidak valid" })
+      return res.status(400).json({ error:"Data kosong" })
     }
 
     await db.query(
       "INSERT INTO users (name,email) VALUES (?,?)",
-      [name, email]
+      [name,email]
     )
 
     res.json({ success:true })
 
-  }catch(err){
-    console.error(err)
+  }catch{
     res.status(500).json({ error:"Server error" })
   }
 })
@@ -242,7 +240,7 @@ app.delete("/users/:id", isAuth, isAdmin, async (req, res) => {
   try{
     await db.query("DELETE FROM users WHERE id=?", [req.params.id])
     res.json({ success:true })
-  }catch(err){
+  }catch{
     res.status(500).json({ error:"Server error" })
   }
 })
@@ -253,17 +251,25 @@ app.put("/users/:id", isAuth, isAdmin, async (req, res) => {
 
     await db.query(
       "UPDATE users SET name=?, email=? WHERE id=?",
-      [name, email, req.params.id]
+      [name,email,req.params.id]
     )
 
     res.json({ success:true })
 
-  }catch(err){
+  }catch{
     res.status(500).json({ error:"Server error" })
   }
 })
 
-// START
+// ================= LOGOUT =================
+app.get("/logout", (req, res) => {
+  req.session.destroy(()=>{
+    res.clearCookie("connect.sid")
+    res.json({ success:true })
+  })
+})
+
+// ================= START =================
 app.listen(process.env.PORT || 3000, () => {
   console.log("Server jalan...")
 })
