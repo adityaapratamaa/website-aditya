@@ -269,6 +269,11 @@ button:disabled{
   letter-spacing:0.5px;
 }
 
+#toast{
+  box-shadow:0 10px 30px rgba(0,0,0,.5);
+  font-weight:500;
+}
+
 </style>
 </head>
 
@@ -292,7 +297,7 @@ button:disabled{
     <input id="newPass" type="password" placeholder="Password Baru" style="flex:1">
   </div>
 
-  <button onclick="changePassword()" 
+  <button onclick="changePassword(event)" 
     style="margin-top:10px; padding:8px 14px; font-size:12px; background:#334155;">
     Update Password
   </button>
@@ -391,7 +396,10 @@ function load(){
   showSkeleton() // 🔥 tampilkan skeleton dulu
 
   fetch(BASE + "/users",{ credentials:"include" })
-  .then(res=>res.json())
+  .then(res=>{
+  if(!res.ok) throw new Error()
+  return res.json()
+})
   .then(data=>{
     allUsers=data
     render(data) // nanti skeleton hilang otomatis
@@ -420,7 +428,7 @@ function render(data){
         ${
           currentUser.role === "admin"
           ? `
-            <button class="edit-btn" onclick="openEdit(${u.id},'${encodeURIComponent(u.name)}','${u.email}')">Edit</button>
+            <button class="edit-btn" onclick="openEdit(${u.id},'${encodeURIComponent(u.name)}','${encodeURIComponent(u.email)}')">Edit</button>
             <button class="delete-btn" onclick="openDelete(${u.id})">Hapus</button>
           `
           : ""
@@ -452,18 +460,27 @@ if(!email.includes("@")){
   addBtn.disabled = true
 
   fetch(BASE + "/users",{
-    method:"POST",
-    credentials:"include",
-    headers:{"Content-Type":"application/json"},
-    body:JSON.stringify({name,email})
-  }).then(()=>{
-    document.getElementById("name").value=""
-    document.getElementById("email").value=""
-    load()
-    showToast("Berhasil")
-  }).finally(()=>{
-    addBtn.disabled = false
-  })
+  method:"POST",
+  credentials:"include",
+  headers:{"Content-Type":"application/json"},
+  body:JSON.stringify({name,email})
+})
+.then(res=>{
+  if(!res.ok) throw new Error()
+  return res.json()
+})
+.then(()=>{
+  document.getElementById("name").value=""
+  document.getElementById("email").value=""
+  load()
+  showToast("Berhasil")
+})
+.catch(()=>{
+  showToast("Gagal menambah","error")
+})
+.finally(()=>{
+  addBtn.disabled = false
+})
 }
 
 // EDIT
@@ -472,7 +489,7 @@ function openEdit(id,name,email){
 
   selectedId=id
   editName.value=decodeURIComponent(name)
-  editEmail.value=email
+  editEmail.value = decodeURIComponent(email)
   modal.style.display="flex"
   setTimeout(()=>modal.classList.add("show"),10)
 }
@@ -482,20 +499,29 @@ function updateUser(e){
   btn.disabled = true
 
   fetch(BASE + "/users/"+selectedId,{
-    method:"PUT",
-    credentials:"include",
-    headers:{"Content-Type":"application/json"},
-    body:JSON.stringify({
-      name:editName.value,
-      email:editEmail.value
-    })
-  }).then(()=>{
-    closeModal()
-    load()
-    showToast("Updated")
-  }).finally(()=>{
-    btn.disabled = false
+  method:"PUT",
+  credentials:"include",
+  headers:{"Content-Type":"application/json"},
+  body:JSON.stringify({
+    name:editName.value,
+    email:editEmail.value
   })
+})
+.then(res=>{
+  if(!res.ok) throw new Error()
+  return res.json()
+})
+.then(()=>{
+  closeModal()
+  load()
+  showToast("Berhasil diupdate")
+})
+.catch(()=>{
+  showToast("Gagal update","error")
+})
+.finally(()=>{
+  btn.disabled = false
+})
 }
 
 // DELETE
@@ -514,11 +540,20 @@ function confirmDelete(e){
   fetch(BASE + "/users/"+deleteId,{
     method:"DELETE",
     credentials:"include"
-  }).then(()=>{
+  })
+  .then(res=>{
+    if(!res.ok) throw new Error()
+    return res.json()
+  })
+  .then(()=>{
     closeDeleteModal()
     load()
-    showToast("Terhapus","error")
-  }).finally(()=>{
+    showToast("Berhasil dihapus")
+  })
+  .catch(()=>{
+    showToast("Gagal hapus","error")
+  })
+  .finally(()=>{
     btn.disabled = false
   })
 }
@@ -580,11 +615,12 @@ function showToast(msg,type="success"){
   toast.innerText=msg
   toast.style.background=type==="error"?"#ef4444":"#22c55e"
   toast.style.opacity=1
-  toast.style.transform="translateY(0)"
+  toast.style.transform="translateX(-50%) translateY(0)"
+
   setTimeout(()=>{
     toast.style.opacity=0
-    toast.style.transform="translateY(20px)"
-  },1500)
+    toast.style.transform="translateX(-50%) translateY(20px)"
+  },2000)
 }
 </script>
 
@@ -628,9 +664,14 @@ function changePassword(e){
   .then(res=>res.json())
   .then(data=>{
     if(data.success){
-      showToast("Password berhasil diubah")
+
+      // 🔥 RESET INPUT (BIAR KERASA BERHASIL)
       document.getElementById("oldPass").value=""
       document.getElementById("newPass").value=""
+
+      // 🔥 TOAST LEBIH JELAS
+      showToast("Password berhasil diubah ✅")
+
     }else{
       showToast(data.message || "Gagal","error")
     }
