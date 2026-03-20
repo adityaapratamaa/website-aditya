@@ -7,76 +7,78 @@
 
 <style>
 
+  *{
+  box-sizing:border-box;
+}
+
 /* ================= MOBILE RESPONSIVE ================= */
 @media (max-width: 600px){
 
+  /* HEADER FIX */
   .top{
-    padding:15px 20px;
+    flex-direction:row;
+    justify-content:space-between;
+    align-items:center;
+    padding:12px 14px;
   }
 
   .top h2{
-    font-size:18px;
+    font-size:16px;
   }
 
   .logout{
+    width:auto;
+    padding:6px 10px;
     font-size:12px;
-    padding:5px 10px;
   }
 
+  /* CONTAINER FIX */
   .container{
-    margin:20px 12px;
-    padding:18px;
-    border-radius:14px;
+    margin:12px;
+    padding:14px;
+    border-radius:12px;
   }
 
+  /* INPUT */
   input{
-    padding:12px;
-    font-size:14px;
+    padding:9px;
+    font-size:13px;
   }
 
+  /* BUTTON FIX (BIAR GA GENDUT) */
   button{
-    width:100%;
-    padding:12px;
-    font-size:14px;
+    padding:9px;
+    font-size:13px;
   }
 
   .btn-add{
-    width:100%;
     margin-top:5px;
   }
 
-  /* USER CARD STACK */
+  /* USER CARD */
   .user{
-    flex-direction:column;
-    align-items:flex-start;
-    gap:10px;
+    padding:10px;
+    gap:6px;
   }
 
-  .actions{
-    width:100%;
-    display:flex;
-    gap:10px;
+  .user b{
+    font-size:13px;
   }
 
+  .user div{
+    font-size:12px;
+  }
+
+  /* ACTION BUTTON */
   .actions button{
-    flex:1;
+    padding:7px;
+    font-size:11px;
   }
 
   /* MODAL */
   .modal-content{
-    width:90%;
-    padding:20px;
-  }
-
-  /* TOAST */
-  #toast{
-    right:50%;
-    transform:translateX(50%) translateY(20px);
-    bottom:15px;
-  }
-
-  #toast.show{
-    transform:translateX(50%) translateY(0);
+    width:92%;
+    padding:16px;
   }
 }
 
@@ -203,13 +205,14 @@ button:hover{transform:scale(1.05)}
 #toast{
   position:fixed;
   bottom:20px;
-  right:20px;
+  left: 50%;
+  right:auto;
   padding:10px 16px;
   border-radius:8px;
   font-size:13px;
   color:white;
   opacity:0;
-  transform:translateY(20px);
+  transform:translateX(-50%) translateY(20px);
   transition:.3s;
 }
 
@@ -220,6 +223,11 @@ button:hover{transform:scale(1.05)}
 
 .btn-cancel:hover{
   background:#cbd5f5;
+}
+
+button:disabled{
+  opacity:0.6;
+  cursor:not-allowed;
 }
 </style>
 </head>
@@ -254,7 +262,7 @@ button:hover{transform:scale(1.05)}
     <input id="editName">
     <input id="editEmail">
     <br><br>
-    <button onclick="updateUser()" class="btn-add">Simpan</button>
+    <button onclick="updateUser(event)" class="btn-add">Simpan</button>
     <button onclick="closeModal()" class="btn-cancel">Batal</button>
   </div>
 </div>
@@ -264,7 +272,7 @@ button:hover{transform:scale(1.05)}
   <div class="modal-content">
     <h3>Yakin hapus?</h3>
     <br>
-    <button onclick="confirmDelete()" class="delete-btn">Hapus</button>
+    <button onclick="confirmDelete(event)" class="delete-btn">Hapus</button>
     <button onclick="closeDeleteModal()" class="btn-cancel">Batal</button>
   </div>
 </div>
@@ -361,10 +369,15 @@ function add(){
     return showToast("Tidak diizinkan","error")
   }
 
-  const name=document.getElementById("name").value
-  const email=document.getElementById("email").value
+  const name=document.getElementById("name").value.trim()
+  const email=document.getElementById("email").value.trim()
 
   if(!name||!email) return showToast("Isi semua","error")
+  if(!email.includes("@")){
+  return showToast("Email tidak valid","error")
+}
+
+  addBtn.disabled = true // 🔥 disable button
 
   fetch(BASE + "/users",{
     method:"POST",
@@ -376,6 +389,8 @@ function add(){
     document.getElementById("email").value=""
     load()
     showToast("Berhasil")
+  }).finally(()=>{
+    addBtn.disabled = false // 🔥 aktif lagi
   })
 }
 
@@ -390,7 +405,10 @@ function openEdit(id,name,email){
   setTimeout(()=>modal.classList.add("show"),10)
 }
 
-function updateUser(){
+function updateUser(e){
+  const btn = e.target
+  btn.disabled = true
+
   fetch(BASE + "/users/"+selectedId,{
     method:"PUT",
     credentials:"include",
@@ -403,6 +421,8 @@ function updateUser(){
     closeModal()
     load()
     showToast("Updated")
+  }).finally(()=>{
+    btn.disabled = false
   })
 }
 
@@ -415,7 +435,10 @@ function openDelete(id){
   setTimeout(()=>deleteModal.classList.add("show"),10)
 }
 
-function confirmDelete(){
+function confirmDelete(e){
+  const btn = e.target
+  btn.disabled = true
+
   fetch(BASE + "/users/"+deleteId,{
     method:"DELETE",
     credentials:"include"
@@ -423,6 +446,8 @@ function confirmDelete(){
     closeDeleteModal()
     load()
     showToast("Terhapus","error")
+  }).finally(()=>{
+    btn.disabled = false
   })
 }
 
