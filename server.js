@@ -19,13 +19,15 @@ app.use(express.json())
 
 // SESSION
 app.use(session({
-  secret: "secret-key",
+  secret: process.env.SESSION_SECRET || "secret-key",
   resave: false,
   saveUninitialized: false,
   proxy: true,
   cookie: {
+    httpOnly: true,
     secure: true,
-    sameSite: "none"
+    sameSite: "none",
+    maxAge: 1000 * 60 * 60 * 24 // 1 hari
   }
 }))
 
@@ -55,31 +57,64 @@ app.post("/register", async (req, res) => {
   try {
     const { username, password } = req.body
 
+    // ✅ VALIDASI KOSONG
     if (!username || !password) {
-      return res.json({ success: false, message: "Data tidak lengkap" })
+      return res.json({
+        success: false,
+        message: "Data tidak lengkap"
+      })
     }
 
+    // ✅ VALIDASI PANJANG PASSWORD
+    if (password.length < 6) {
+      return res.json({
+        success: false,
+        message: "Password minimal 6 karakter"
+      })
+    }
+
+    // ✅ VALIDASI HURUF & ANGKA
+    const hasHuruf = /[A-Za-z]/.test(password)
+    const hasAngka = /[0-9]/.test(password)
+
+    if (!hasHuruf || !hasAngka) {
+      return res.json({
+        success: false,
+        message: "Password harus ada huruf & angka"
+      })
+    }
+
+    // ✅ CEK USERNAME SUDAH ADA
     const [existing] = await db.query(
       "SELECT * FROM auth_users WHERE username=?",
       [username]
     )
 
     if (existing.length > 0) {
-      return res.json({ success: false, message: "Username sudah dipakai" })
+      return res.json({
+        success: false,
+        message: "Username sudah dipakai"
+      })
     }
 
+    // ✅ HASH PASSWORD
     const hashed = await bcrypt.hash(password, 10)
 
+    // ✅ SIMPAN KE DATABASE
     await db.query(
       "INSERT INTO auth_users (username, password) VALUES (?,?)",
       [username, hashed]
     )
 
+    // ✅ RESPONSE SUCCESS
     res.json({ success: true })
 
   } catch (err) {
     console.error(err)
-    res.status(500).json({ success: false })
+    res.status(500).json({
+      success: false,
+      message: "Server error"
+    })
   }
 })
 
@@ -93,12 +128,16 @@ app.post("/login", async (req, res) => {
       [username]
     )
 
-    if (users.length === 0) return res.json({ success: false })
+    if (users.length === 0) {
+      return res.json({ success: false })
+    }
 
     const match = await bcrypt.compare(password, users[0].password)
-    if (!match) return res.json({ success: false })
 
-    // 🔥 SESSION + ROLE
+    if (!match) {
+      return res.json({ success: false })
+    }
+
     req.session.user = {
       username: users[0].username,
       role: users[0].role || "user"
@@ -109,18 +148,6 @@ app.post("/login", async (req, res) => {
   } catch (err) {
     console.error(err)
     res.status(500).json({ success: false })
-  }
-})
-
-// ================= CEK SESSION =================
-app.get("/me", (req, res) => {
-  if(req.session.user){
-    res.json({
-      loggedIn: true,
-      user: req.session.user
-    })
-  } else {
-    res.json({ loggedIn: false })
   }
 })
 
@@ -142,28 +169,57 @@ app.get("/users", isAuth, async (req, res) => {
 
 // 🔥 ADMIN ONLY
 app.post("/users", isAuth, isAdmin, async (req, res) => {
-  const { name, email } = req.body
-  await db.query(
-    "INSERT INTO users (name,email) VALUES (?,?)",
-    [name, email]
-  )
-  res.json({ success: true })
+  try{
+    const { name, email } = req.body
+
+    if(!name || !email){
+      return res.status(400).json({ error: "Data tidak lengkap" })
+    }
+
+    if(!email.includes("@")){
+      return res.status(400).json({ error: "Email tidak valid" })
+    }
+
+    await db.query(
+      "INSERT INTO users (name,email) VALUES (?,?)",
+      [name, email]
+    )
+
+    res.json({ success: true })
+
+  }catch(err){
+    console.error(err)
+    res.status(500).json({ error: "Server error" })
+  }
 })
 
 // 🔥 ADMIN ONLY
 app.delete("/users/:id", isAuth, isAdmin, async (req, res) => {
-  await db.query("DELETE FROM users WHERE id=?", [req.params.id])
-  res.json({ success: true })
+  try{
+    await db.query("DELETE FROM users WHERE id=?", [req.params.id])
+    res.json({ success: true })
+  }catch(err){
+    console.error(err)
+    res.status(500).json({ error: "Server error" })
+  }
 })
 
 // 🔥 ADMIN ONLY
 app.put("/users/:id", isAuth, isAdmin, async (req, res) => {
-  const { name, email } = req.body
-  await db.query(
-    "UPDATE users SET name=?, email=? WHERE id=?",
-    [name, email, req.params.id]
-  )
-  res.json({ success: true })
+  try{
+    const { name, email } = req.body
+
+    await db.query(
+      "UPDATE users SET name=?, email=? WHERE id=?",
+      [name, email, req.params.id]
+    )
+
+    res.json({ success: true })
+
+  }catch(err){
+    console.error(err)
+    res.status(500).json({ error: "Server error" })
+  }
 })
 
 // START SERVER

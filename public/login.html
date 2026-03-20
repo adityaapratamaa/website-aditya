@@ -126,27 +126,20 @@ async function login(){
     const data = await res.json()
 
     if(data.success){
-      showPopup("Login berhasil","success")
+  showPopup("Login berhasil","success")
 
-      // 🔥 tunggu cookie tersimpan
-      setTimeout(async ()=>{
-        const check = await fetch(BASE + "/me",{
-          credentials:"include"
-        })
+  const check = await fetch(BASE + "/me",{
+    credentials:"include"
+  })
 
-        const result = await check.json()
+  const result = await check.json()
 
-        if(result.loggedIn){
-          window.location.href="index.html"
-        }else{
-          showPopup("Session gagal","error")
-        }
-
-      },1000)
-
-    }else{
-      showPopup("Username / password salah","error")
-    }
+  if(result.loggedIn){
+    window.location.href="index.html"
+  }else{
+    showPopup("Username / password salah","error")
+  }
+}
 
   }catch(err){
     console.log(err)
