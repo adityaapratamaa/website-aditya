@@ -197,17 +197,35 @@ let allUsers=[]
 let selectedId=null
 let deleteId=null
 
-// 🔐 PROTECT HALAMAN
-fetch(BASE + "/me", { credentials:"include" })
-.then(res=>res.json())
-.then(data=>{
-  if(!data.loggedIn){
+const list = document.getElementById("list")
+const modal = document.getElementById("modal")
+const deleteModal = document.getElementById("deleteModal")
+const editName = document.getElementById("editName")
+const editEmail = document.getElementById("editEmail")
+const search = document.getElementById("search")
+const toast = document.getElementById("toast")
+
+// 🔐 CHECK AUTH SEKALI SAJA
+async function init(){
+  try{
+    const res = await fetch(BASE + "/me", {
+      credentials: "include"
+    })
+
+    const data = await res.json()
+
+    if(!data.loggedIn){
+      window.location.href="login.html"
+    }else{
+      load()
+    }
+
+  }catch{
     window.location.href="login.html"
-  } else {
-    load()
   }
-})
-.catch(()=>window.location.href="login.html")
+}
+
+init()
 
 // LOAD DATA
 function load(){
@@ -239,11 +257,8 @@ function render(data){
 
 // ADD
 function add(){
-  const nameInput=document.getElementById("name")
-  const emailInput=document.getElementById("email")
-
-  const name=nameInput.value
-  const email=emailInput.value
+  const name=document.getElementById("name").value
+  const email=document.getElementById("email").value
 
   if(!name||!email) return showToast("Isi semua","error")
 
@@ -253,8 +268,8 @@ function add(){
     headers:{"Content-Type":"application/json"},
     body:JSON.stringify({name,email})
   }).then(()=>{
-    nameInput.value=""
-    emailInput.value=""
+    document.getElementById("name").value=""
+    document.getElementById("email").value=""
     load()
     showToast("Berhasil")
   })
@@ -323,7 +338,7 @@ function searchUser(){
   ))
 }
 
-// LOGOUT FIX
+// LOGOUT
 function logout(){
   fetch(BASE + "/logout",{ credentials:"include" })
   .then(()=>{
@@ -333,14 +348,13 @@ function logout(){
 
 // TOAST
 function showToast(msg,type="success"){
-  const t=toast
-  t.innerText=msg
-  t.style.background=type==="error"?"#ef4444":"#22c55e"
-  t.style.opacity=1
-  t.style.transform="translateY(0)"
+  toast.innerText=msg
+  toast.style.background=type==="error"?"#ef4444":"#22c55e"
+  toast.style.opacity=1
+  toast.style.transform="translateY(0)"
   setTimeout(()=>{
-    t.style.opacity=0
-    t.style.transform="translateY(20px)"
+    toast.style.opacity=0
+    toast.style.transform="translateY(20px)"
   },1500)
 }
 </script>
