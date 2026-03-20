@@ -17,15 +17,15 @@ app.use(cors({
 
 app.use(express.json())
 
-// SESSION (FIX ANTI GAGAL)
+// SESSION
 app.use(session({
   secret: "secret-key",
   resave: false,
   saveUninitialized: false,
-  proxy: true, // 🔥 penting
+  proxy: true,
   cookie: {
-    secure: true,      // wajib https
-    sameSite: "none"   // wajib cross domain
+    secure: true,
+    sameSite: "none"
   }
 }))
 
@@ -35,10 +35,17 @@ const db = mysql.createPool({
   ssl: { rejectUnauthorized: false }
 })
 
-// ================= AUTH MIDDLEWARE =================
+// ================= MIDDLEWARE =================
 function isAuth(req, res, next){
   if(!req.session.user){
     return res.status(401).json({ error: "Unauthorized" })
+  }
+  next()
+}
+
+function isAdmin(req, res, next){
+  if(!req.session.user || req.session.user.role !== "admin"){
+    return res.status(403).json({ error: "Forbidden" })
   }
   next()
 }
@@ -91,9 +98,10 @@ app.post("/login", async (req, res) => {
     const match = await bcrypt.compare(password, users[0].password)
     if (!match) return res.json({ success: false })
 
-    // 🔥 SET SESSION
+    // 🔥 SESSION + ROLE
     req.session.user = {
-      username: users[0].username
+      username: users[0].username,
+      role: users[0].role || "user"
     }
 
     res.json({ success: true })
@@ -125,12 +133,15 @@ app.get("/logout", (req, res) => {
 })
 
 // ================= USERS =================
+
+// ✅ SEMUA USER BOLEH LIHAT
 app.get("/users", isAuth, async (req, res) => {
   const [data] = await db.query("SELECT * FROM users ORDER BY id DESC")
   res.json(data)
 })
 
-app.post("/users", isAuth, async (req, res) => {
+// 🔥 ADMIN ONLY
+app.post("/users", isAuth, isAdmin, async (req, res) => {
   const { name, email } = req.body
   await db.query(
     "INSERT INTO users (name,email) VALUES (?,?)",
@@ -139,12 +150,14 @@ app.post("/users", isAuth, async (req, res) => {
   res.json({ success: true })
 })
 
-app.delete("/users/:id", isAuth, async (req, res) => {
+// 🔥 ADMIN ONLY
+app.delete("/users/:id", isAuth, isAdmin, async (req, res) => {
   await db.query("DELETE FROM users WHERE id=?", [req.params.id])
   res.json({ success: true })
 })
 
-app.put("/users/:id", isAuth, async (req, res) => {
+// 🔥 ADMIN ONLY
+app.put("/users/:id", isAuth, isAdmin, async (req, res) => {
   const { name, email } = req.body
   await db.query(
     "UPDATE users SET name=?, email=? WHERE id=?",
