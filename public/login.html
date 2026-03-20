@@ -106,9 +106,10 @@ function showPopup(msg,type){
 }
 
 async function login(){
-  const username=document.getElementById("username").value
-  const password=document.getElementById("password").value
+  const username = document.getElementById("username").value.trim()
+  const password = document.getElementById("password").value
 
+  // ✅ VALIDASI INPUT
   if(!username || !password){
     showPopup("Isi semua field","error")
     return
@@ -118,31 +119,43 @@ async function login(){
     const res = await fetch(BASE + "/login",{
       method:"POST",
       credentials:"include",
-      mode:"cors",
-      headers:{"Content-Type":"application/json"},
-      body:JSON.stringify({username,password})
+      headers:{
+        "Content-Type":"application/json"
+      },
+      body:JSON.stringify({ username, password })
     })
+
+    // ❌ HANDLE ERROR HTTP (500, dll)
+    if(!res.ok){
+      throw new Error("Server error")
+    }
 
     const data = await res.json()
 
+    // ✅ LOGIN BERHASIL
     if(data.success){
-  showPopup("Login berhasil","success")
+      showPopup("Login berhasil","success")
 
-  const check = await fetch(BASE + "/me",{
-    credentials:"include"
-  })
+      // 🔐 CEK SESSION
+      const check = await fetch(BASE + "/me",{
+        credentials:"include"
+      })
 
-  const result = await check.json()
+      const result = await check.json()
 
-  if(result.loggedIn){
-    window.location.href="index.html"
-  }else{
-    showPopup("Username / password salah","error")
-  }
-}
+      if(result.loggedIn){
+        window.location.href = "index.html"
+      }else{
+        showPopup("Session gagal","error")
+      }
+
+    }else{
+      // ❌ LOGIN GAGAL (USERNAME / PASSWORD SALAH)
+      showPopup("Username / password salah","error")
+    }
 
   }catch(err){
-    console.log(err)
+    console.error(err)
     showPopup("Server error","error")
   }
 }
