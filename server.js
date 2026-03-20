@@ -151,6 +151,87 @@ app.post("/login", async (req, res) => {
   }
 })
 
+// ================= CHANGE PASSWORD =================
+app.post("/change-password", async (req, res) => {
+  try {
+    // 🔐 harus login
+    if (!req.session.user) {
+      return res.status(401).json({ error: "Unauthorized" })
+    }
+
+    const { oldPassword, newPassword } = req.body
+
+    // ✅ validasi kosong
+    if (!oldPassword || !newPassword) {
+      return res.json({
+        success: false,
+        message: "Data tidak lengkap"
+      })
+    }
+
+    // ambil user dari DB
+    const [users] = await db.query(
+      "SELECT * FROM auth_users WHERE username=?",
+      [req.session.user.username]
+    )
+
+    if (users.length === 0) {
+      return res.json({ success: false })
+    }
+
+    const user = users[0]
+
+    // 🔐 cek password lama
+    const match = await bcrypt.compare(oldPassword, user.password)
+
+    if (!match) {
+      return res.json({
+        success: false,
+        message: "Password lama salah"
+      })
+    }
+
+    // ✅ validasi password baru
+    if (newPassword.length < 6) {
+      return res.json({
+        success: false,
+        message: "Password minimal 6 karakter"
+      })
+    }
+
+    const hasHuruf = /[A-Za-z]/.test(newPassword)
+    const hasAngka = /[0-9]/.test(newPassword)
+
+    if (!hasHuruf || !hasAngka) {
+      return res.json({
+        success: false,
+        message: "Password harus huruf & angka"
+      })
+    }
+
+    // 🔐 hash password baru
+    const hashed = await bcrypt.hash(newPassword, 10)
+
+    // 💾 update DB
+    await db.query(
+      "UPDATE auth_users SET password=? WHERE username=?",
+      [hashed, req.session.user.username]
+    )
+
+    res.json({
+      success: true,
+      message: "Password berhasil diubah"
+    })
+
+  } catch (err) {
+    console.error(err)
+    res.status(500).json({
+      success: false,
+      message: "Server error"
+    })
+  }
+})
+
 // ================= LOGOUT =================
 app.get("/logout", (req, res) => {
   req.session.destroy(() => {

@@ -281,6 +281,17 @@ button:disabled{
 </div>
 
 <div class="container">
+  <h3>Ganti Password</h3>
+
+  <input id="oldPass" type="password" placeholder="Password Lama">
+  <input id="newPass" type="password" placeholder="Password Baru">
+
+  <button onclick="changePassword()" class="btn-add">
+    Ganti Password
+  </button>
+</div>
+
+<div class="container">
   <input id="name" placeholder="Nama">
   <input id="email" placeholder="Email">
   <button class="btn-add" onclick="add()">Tambah</button>
@@ -572,6 +583,43 @@ function showToast(msg,type="success"){
       </div>
     `
   }
+}
+</script>
+
+<script>
+ function changePassword(){
+  const btn = event.target
+  btn.disabled = true
+
+  const oldPassword = document.getElementById("oldPass").value
+  const newPassword = document.getElementById("newPass").value
+
+  if(!oldPassword || !newPassword){
+    btn.disabled = false
+    return showToast("Isi semua field","error")
+  }
+
+  fetch(BASE + "/change-password",{
+    method:"POST",
+    credentials:"include",
+    headers:{
+      "Content-Type":"application/json"
+    },
+    body:JSON.stringify({ oldPassword, newPassword })
+  })
+  .then(res=>res.json())
+  .then(data=>{
+    if(data.success){
+      showToast("Password berhasil diubah")
+      document.getElementById("oldPass").value=""
+      document.getElementById("newPass").value=""
+    }else{
+      showToast(data.message || "Gagal","error")
+    }
+  })
+  .finally(()=>{
+    btn.disabled = false
+  })
 }
 </script>
 
