@@ -7,6 +7,11 @@
 
 <style>
 
+  #list{
+  min-height:100px;
+  opacity:0.8;
+}
+
   *{
   box-sizing:border-box;
 }
@@ -252,7 +257,7 @@ button:disabled{
   <hr>
 
   <input id="search" placeholder="Cari..." onkeyup="searchUser()">
-  <div id="list"></div>
+  <div id="list">Loading...</div>
 </div>
 
 <!-- EDIT -->
@@ -328,17 +333,26 @@ init()
 
 // LOAD
 function load(){
+  list.innerHTML = "Loading..."
+
   fetch(BASE + "/users",{ credentials:"include" })
   .then(res=>res.json())
   .then(data=>{
     allUsers=data
     render(data)
   })
-  .catch(()=>showToast("Server error","error"))
+  .catch(()=>{
+    list.innerHTML = "Gagal load data"
+    showToast("Server error","error")
+  })
 }
 
 // 🔥 RENDER (FIX ROLE)
 function render(data){
+  if(data.length === 0){
+  list.innerHTML = "<p style='text-align:center;opacity:0.6'>Belum ada data</p>"
+  return
+}
   list.innerHTML=""
 
   data.forEach(u=>{
