@@ -6,6 +6,10 @@ const session = require("express-session")
 
 const app = express()
 
+// 🔥 WAJIB UNTUK RAILWAY / VERCEL
+app.set("trust proxy", 1)
+
+// CORS
 app.use(cors({
   origin: "https://website-aditya-one.vercel.app",
   credentials: true
@@ -13,13 +17,15 @@ app.use(cors({
 
 app.use(express.json())
 
+// SESSION (FIX ANTI GAGAL)
 app.use(session({
   secret: "secret-key",
   resave: false,
   saveUninitialized: false,
+  proxy: true, // 🔥 penting
   cookie: {
-    secure: true,        // 🔥 WAJIB HTTPS
-    sameSite: "none"     // 🔥 WAJIB CROSS DOMAIN
+    secure: true,      // wajib https
+    sameSite: "none"   // wajib cross domain
   }
 }))
 
@@ -29,7 +35,7 @@ const db = mysql.createPool({
   ssl: { rejectUnauthorized: false }
 })
 
-// ================= MIDDLEWARE AUTH =================
+// ================= AUTH MIDDLEWARE =================
 function isAuth(req, res, next){
   if(!req.session.user){
     return res.status(401).json({ error: "Unauthorized" })
@@ -85,27 +91,40 @@ app.post("/login", async (req, res) => {
     const match = await bcrypt.compare(password, users[0].password)
     if (!match) return res.json({ success: false })
 
-    req.session.user = username
+    // 🔥 SET SESSION
+    req.session.user = {
+      username: users[0].username
+    }
+
     res.json({ success: true })
 
-  } catch {
+  } catch (err) {
+    console.error(err)
     res.status(500).json({ success: false })
   }
 })
 
-// ================= SESSION =================
+// ================= CEK SESSION =================
 app.get("/me", (req, res) => {
-  res.json({ loggedIn: !!req.session.user })
+  if(req.session.user){
+    res.json({
+      loggedIn: true,
+      user: req.session.user
+    })
+  } else {
+    res.json({ loggedIn: false })
+  }
 })
 
 // ================= LOGOUT =================
 app.get("/logout", (req, res) => {
   req.session.destroy(() => {
+    res.clearCookie("connect.sid")
     res.json({ success: true })
   })
 })
 
-// ================= USERS (PROTECTED) =================
+// ================= USERS =================
 app.get("/users", isAuth, async (req, res) => {
   const [data] = await db.query("SELECT * FROM users ORDER BY id DESC")
   res.json(data)
@@ -113,7 +132,7 @@ app.get("/users", isAuth, async (req, res) => {
 
 app.post("/users", isAuth, async (req, res) => {
   const { name, email } = req.body
-  const [result] = await db.query(
+  await db.query(
     "INSERT INTO users (name,email) VALUES (?,?)",
     [name, email]
   )
@@ -134,5 +153,7 @@ app.put("/users/:id", isAuth, async (req, res) => {
   res.json({ success: true })
 })
 
-// START
-app.listen(process.env.PORT || 3000)
+// START SERVER
+app.listen(process.env.PORT || 3000, () => {
+  console.log("Server jalan...")
+})

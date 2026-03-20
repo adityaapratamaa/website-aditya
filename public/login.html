@@ -110,7 +110,8 @@ async function login(){
   try{
     const res = await fetch(BASE + "/login",{
       method:"POST",
-      credentials:"include", // 🔥 WAJIB
+      credentials:"include",
+      mode:"cors",
       headers:{"Content-Type":"application/json"},
       body:JSON.stringify({username,password})
     })
@@ -120,11 +121,12 @@ async function login(){
     if(data.success){
       showPopup("Login berhasil","success")
 
-      // 🔥 CEK SESSION DULU (ANTI NENDANG)
+      // 🔥 tunggu cookie tersimpan
       setTimeout(async ()=>{
         const check = await fetch(BASE + "/me",{
           credentials:"include"
         })
+
         const result = await check.json()
 
         if(result.loggedIn){
@@ -132,13 +134,15 @@ async function login(){
         }else{
           showPopup("Session gagal","error")
         }
-      },500)
+
+      },1000)
 
     }else{
       showPopup("Username / password salah","error")
     }
 
-  }catch{
+  }catch(err){
+    console.log(err)
     showPopup("Server error","error")
   }
 }
