@@ -170,3 +170,19 @@ app.put("/users/:id", isAuth, isAdmin, async (req, res) => {
 app.listen(process.env.PORT || 3000, () => {
   console.log("Server jalan...")
 })
+
+// ================= STATS =================
+app.get("/stats", isAuth, async (req, res) => {
+  try {
+    const [[userCount]] = await db.query("SELECT COUNT(*) as total FROM users")
+    const [[accountCount]] = await db.query("SELECT COUNT(*) as total FROM auth_users")
+
+    res.json({
+      totalUsers: userCount.total,
+      totalAccounts: accountCount.total
+    })
+  } catch (err) {
+    console.error(err)
+    res.status(500).json({ error: "Server error" })
+  }
+})

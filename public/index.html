@@ -155,6 +155,11 @@ button:hover{transform:scale(1.05)}
   <button class="logout" onclick="logout()">Logout</button>
 </div>
 
+<div class="container" style="margin-bottom:20px;">
+  <h3>Dashboard</h3>
+  <div id="stats"></div>
+</div>
+
 <div class="container">
   <input id="name" placeholder="Nama">
   <input id="email" placeholder="Email">
@@ -228,6 +233,7 @@ async function init(){
     }
 
     load()
+    loadStats()
 
   }catch{
     window.location.href="login.html"
@@ -370,6 +376,25 @@ function logout(){
   .then(()=>{
     window.location.href="login.html"
   })
+}
+
+//STATS
+async function loadStats(){
+  try{
+    const res = await fetch(BASE + "/stats", {
+      credentials: "include"
+    })
+
+    const data = await res.json()
+
+    document.getElementById("stats").innerHTML = `
+      <p>Total Data: <b>${data.totalUsers}</b></p>
+      <p>Total Akun: <b>${data.totalAccounts}</b></p>
+      <p>Login sebagai: <b>${currentUser.username}</b></p>
+    `
+  }catch{
+    showToast("Gagal load stats","error")
+  }
 }
 
 // TOAST
