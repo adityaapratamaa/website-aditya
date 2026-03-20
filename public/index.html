@@ -5,6 +5,80 @@
 <title>CRUD Website</title>
 
 <style>
+
+/* ================= MOBILE RESPONSIVE ================= */
+@media (max-width: 600px){
+
+  .top{
+    padding:15px 20px;
+  }
+
+  .top h2{
+    font-size:18px;
+  }
+
+  .logout{
+    font-size:12px;
+    padding:5px 10px;
+  }
+
+  .container{
+    margin:20px 12px;
+    padding:18px;
+    border-radius:14px;
+  }
+
+  input{
+    padding:12px;
+    font-size:14px;
+  }
+
+  button{
+    width:100%;
+    padding:12px;
+    font-size:14px;
+  }
+
+  .btn-add{
+    width:100%;
+    margin-top:5px;
+  }
+
+  /* USER CARD STACK */
+  .user{
+    flex-direction:column;
+    align-items:flex-start;
+    gap:10px;
+  }
+
+  .actions{
+    width:100%;
+    display:flex;
+    gap:10px;
+  }
+
+  .actions button{
+    flex:1;
+  }
+
+  /* MODAL */
+  .modal-content{
+    width:90%;
+    padding:20px;
+  }
+
+  /* TOAST */
+  #toast{
+    right:50%;
+    transform:translateX(50%) translateY(20px);
+    bottom:15px;
+  }
+
+  #toast.show{
+    transform:translateX(50%) translateY(0);
+  }
+}
+
 body{
   font-family:'Segoe UI',sans-serif;
   background:linear-gradient(135deg,#020617,#0f172a);
@@ -39,6 +113,7 @@ body{
 /* CONTAINER */
 .container{
   max-width:750px;
+  width:100%;
   margin:40px auto;
   background:#1e293b;
   padding:25px;
