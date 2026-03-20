@@ -7,6 +7,20 @@
 
 <style>
 
+  .loader{
+  border:4px solid #1e293b;
+  border-top:4px solid #3b82f6;
+  border-radius:50%;
+  width:40px;
+  height:40px;
+  animation:spin 1s linear infinite;
+}
+
+@keyframes spin{
+  0%{transform:rotate(0deg)}
+  100%{transform:rotate(360deg)}
+}
+
   #list{
   min-height:100px;
   opacity:0.8;
@@ -333,7 +347,7 @@ init()
 
 // LOAD
 function load(){
-  list.innerHTML = "Loading..."
+  showLoading()
 
   fetch(BASE + "/users",{ credentials:"include" })
   .then(res=>res.json())
@@ -342,8 +356,10 @@ function load(){
     render(data)
   })
   .catch(()=>{
-    list.innerHTML = "Gagal load data"
     showToast("Server error","error")
+  })
+  .finally(()=>{
+    hideLoading()
   })
 }
 
@@ -386,12 +402,16 @@ function add(){
   const name=document.getElementById("name").value.trim()
   const email=document.getElementById("email").value.trim()
 
-  if(!name||!email) return showToast("Isi semua","error")
-  if(!email.includes("@")){
+  if(!name || !email){
+  return showToast("Isi semua","error")
+}
+
+if(!email.includes("@")){
   return showToast("Email tidak valid","error")
 }
 
-  addBtn.disabled = true // 🔥 disable button
+  showLoading()
+  addBtn.disabled = true
 
   fetch(BASE + "/users",{
     method:"POST",
@@ -404,7 +424,8 @@ function add(){
     load()
     showToast("Berhasil")
   }).finally(()=>{
-    addBtn.disabled = false // 🔥 aktif lagi
+    hideLoading()
+    addBtn.disabled = false
   })
 }
 
@@ -522,6 +543,29 @@ function showToast(msg,type="success"){
     toast.style.opacity=0
     toast.style.transform="translateY(20px)"
   },1500)
+}
+</script>
+
+<div id="spinner" style="
+  display:none;
+  position:fixed;
+  top:50%;
+  left:50%;
+  transform:translate(-50%,-50%);
+  z-index:999;
+">
+  <div class="loader"></div>
+</div>
+
+<script>
+const spinner = document.getElementById("spinner")
+
+function showLoading(){
+  spinner.style.display = "block"
+}
+
+function hideLoading(){
+  spinner.style.display = "none"
 }
 </script>
 
